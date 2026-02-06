@@ -42,9 +42,10 @@ app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 
 app.use(session({
-    secret: 'mrt_bot_secret_key_2026',
+    secret: 'mrt_bot_secret_key',
     resave: false,
-    saveUninitialized: true
+    saveUninitialized: true,
+    cookie: { maxAge: 3600000 }
 }));
 
 function findFileRecursive(dir, fileName) {
@@ -126,9 +127,9 @@ app.get('/api/stats', async (req, res) => {
     }
 
     res.json({
-        ping: Date.now() - req.startTime,
-        serverName: client.guilds.cache.first()?.name || "Bot",
-        users: client.users.cache.size,
+        ping: global.client?.ws.ping || 0,
+        serverName: global.client?.guilds.cache.first()?.name || "Bot",
+        users: global.client?.users.cache.size || 0,
         ram: (process.memoryUsage().heapUsed / 1024 / 1024).toFixed(2),
         geminiKey: !!config.geminiKey,
         geminiValid: geminiValid
@@ -240,6 +241,34 @@ app.post('/toggle-command', checkAuth, (req, res) => {
     const newState = currentState === '1' ? 0 : 1;
     addPanelLog(`Commande [${commandName}] -> ${newState === 1 ? 'ON' : 'OFF'}`);
     db.run('INSERT OR REPLACE INTO commands_status (commandName, enabled) VALUES (?, ?)', [commandName, newState], () => res.redirect('/'));
+});
+
+const bioPath = config.bioRoute || "b";
+
+app.get(`/${bioPath}/:slug`, (req, res) => {
+    const slug = req.params.slug;
+    
+    db.get('SELECT * FROM user_bios WHERE slug = ?', [slug], (err, row) => {
+        if (!row) return res.status(404).send("Cette bio n'existe pas.");
+
+        if (!req.session.viewed_bios) {
+            req.session.viewed_bios = [];
+        }
+
+        if (!req.session.viewed_bios.includes(slug)) {
+            db.run('UPDATE user_bios SET views = views + 1 WHERE slug = ?', [slug]);
+            req.session.viewed_bios.push(slug);
+        }
+
+        let socials = {};
+        try { socials = row.social_links ? JSON.parse(row.social_links) : {}; } catch (e) {}
+        
+        res.render('bio', { 
+            data: row, 
+            socials: socials,
+            config: config 
+        });
+    });
 });
 
 export function startDashboard() {
