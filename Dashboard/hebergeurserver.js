@@ -48,7 +48,8 @@ app.use(express.json());
 app.use(session({
     secret: 'mrt_bot_secret_key_2026',
     resave: false,
-    saveUninitialized: true
+    saveUninitialized: true,
+    cookie: { maxAge: 3600000 }
 }));
 
 function findFileRecursive(dir, fileName) {
@@ -119,7 +120,7 @@ app.get('/', checkAuth, async (req, res) => {
             });
         });
     } catch (error) { 
-        res.send("Erreur de chargement."); 
+        res.status(500).send("Erreur de chargement."); 
     }
 });
 
@@ -156,20 +157,9 @@ app.post('/api/ai-chat', checkAuth, async (req, res) => {
     try {
         const genAI = new GoogleGenerativeAI(config.geminiKey);
         const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
-
         const context = history.map(h => `User: ${h.user}\nBot: ${h.bot}`).join("\n");
         
-        const prompt = `Tu es un expert en Discord.js. 
-        Fichier actuel : ${fileName}
-        Code actuel : 
-        ${code}
-
-        Historique :
-        ${context}
-
-        Question de l'utilisateur : ${message}
-
-        Réponds de manière concise. Si tu proposes une modification de code, fournis le code complet mis à jour à la fin de ta réponse entouré de balises [CODE_START] et [CODE_END].`;
+        const prompt = `Tu es un expert en Discord.js.\nFichier actuel : ${fileName}\nCode actuel :\n${code}\n\nHistorique :\n${context}\n\nQuestion : ${message}\n\nRéponds brièvement. Si modif, utilise [CODE_START] et [CODE_END].`;
 
         const result = await model.generateContent(prompt);
         const response = await result.response;
@@ -265,6 +255,31 @@ app.post('/toggle-command', checkAuth, (req, res) => {
     const newState = currentState === '1' ? 0 : 1;
     addPanelLog(`Commande [${commandName}] -> ${newState === 1 ? 'ON' : 'OFF'}`);
     db.run('INSERT OR REPLACE INTO commands_status (commandName, enabled) VALUES (?, ?)', [commandName, newState], () => res.redirect('/'));
+});
+
+const bioPath = config.bioRoute || "b";
+app.get(`/${bioPath}/:slug`, (req, res) => {
+    const slug = req.params.slug;
+    
+    db.get('SELECT * FROM user_bios WHERE slug = ?', [slug], (err, row) => {
+        if (!row) return res.status(404).send("Cette bio n'existe pas.");
+
+        if (!req.session.viewed_bios) req.session.viewed_bios = [];
+
+        if (!req.session.viewed_bios.includes(slug)) {
+            db.run('UPDATE user_bios SET views = views + 1 WHERE slug = ?', [slug]);
+            req.session.viewed_bios.push(slug);
+        }
+
+        let socials = {};
+        try { socials = row.social_links ? JSON.parse(row.social_links) : {}; } catch (e) {}
+        
+        res.render('bio', { 
+            data: row, 
+            socials: socials,
+            config: config 
+        });
+    });
 });
 
 export function startDashboard() {
