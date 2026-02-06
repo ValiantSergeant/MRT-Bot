@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= data.display_name %> | Bio</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root { --main-color: <%= data.color || '#5865F2' %>; }
+        
+        body {
+            background: #0a0a0a url('<%= data.background_url || "https://i.imgur.com/8Q5Y6zX.jpg" %>') no-repeat center center fixed;
+            background-size: cover;
+            font-family: 'Inter', sans-serif;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+            overflow-x: hidden;
+        }
+
+        .overlay {
+            position: fixed;
+            inset: 0;
+            background: radial-gradient(circle, rgba(0,0,0,0.4) 0%, rgba(0,0,0,0.8) 100%);
+            backdrop-filter: blur(8px);
+            z-index: -1;
+            transform: translateZ(0);
+        }
+
+        .container {
+            background: rgba(15, 15, 15, 0.6);
+            backdrop-filter: blur(15px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 24px;
+            padding: 2.5rem;
+            width: 90%;
+            max-width: 420px;
+            text-align: center;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+            animation: fadeIn 0.6s cubic-bezier(0.23, 1, 0.32, 1);
+            will-change: transform, opacity;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .avatar {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            margin: 0 auto 1.5rem;
+            border: 2px solid var(--main-color);
+            padding: 4px;
+            object-fit: cover;
+            transition: transform 0.3s ease;
+        }
+
+        .avatar:hover { transform: scale(1.05) rotate(3deg); }
+
+        .link-card {
+            background: rgba(255, 255, 255, 0.03);
+            padding: 0.75rem 1.25rem;
+            border-radius: 16px;
+            transition: all 0.2s ease;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 10px;
+        }
+
+        .link-card:hover {
+            background: rgba(255, 255, 255, 0.07);
+            border-color: var(--main-color);
+            transform: translateX(5px);
+        }
+
+        #player-container {
+            position: fixed;
+            bottom: 25px;
+            right: 25px;
+            width: 320px;
+            z-index: 100;
+            filter: drop-shadow(0 10px 20px rgba(0,0,0,0.5));
+        }
+
+        .spotify-card {
+            position: relative;
+            background: rgba(10, 10, 10, 0.6);
+            backdrop-filter: blur(12px);
+            border-radius: 18px;
+            padding: 5px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            overflow: hidden;
+            transition: transform 0.3s ease;
+        }
+
+        .spotify-card:hover { transform: translateY(-5px); }
+
+        .glow-effect {
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(circle at center, var(--main-color) 0%, transparent 70%);
+            opacity: 0.15;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .mp3-pill {
+            background: rgba(10, 10, 10, 0.8);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 12px 20px;
+            border-radius: 100px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+    </style>
+</head>
+<body>
+    <div class="overlay"></div>
+
+    <main class="container">
+        <img src="<%= data.avatar_url %>" alt="Avatar" class="avatar" loading="lazy">
+        <h1 class="text-2xl font-bold mb-2 tracking-tight"><%= data.display_name %></h1>
+        <p class="text-gray-300 text-sm leading-relaxed mb-6"><%= data.bio || "Welcome to my profile" %></p>
+
+        <nav class="links">
+            <% if (socials) { %>
+                <% Object.keys(socials).forEach(key => { 
+                    const url = socials[key].toLowerCase();
+                    let icon = 'fa-solid fa-link';
+                    if (url.includes('github')) icon = 'fa-brands fa-github';
+                    else if (url.includes('twitter') || url.includes('x.com')) icon = 'fa-brands fa-x-twitter';
+                    else if (url.includes('instagram')) icon = 'fa-brands fa-instagram';
+                    else if (url.includes('discord')) icon = 'fa-brands fa-discord';
+                    else if (url.includes('spotify')) icon = 'fa-brands fa-spotify';
+                %>
+                    <a href="<%= socials[key] %>" target="_blank" class="link-card">
+                        <i class="<%= icon %> text-lg" style="color: var(--main-color)"></i>
+                        <span class="text-sm font-medium"><%= key %></span>
+                    </a>
+                <% }); %>
+            <% } %>
+        </nav>
+
+        <footer class="mt-6 flex items-center justify-center gap-2 text-xs text-gray-500">
+            <i class="fa-solid fa-eye"></i> <%= data.views %> views
+        </footer>
+    </main>
+
+    <% if (data.music_url) { %>
+        <aside id="player-container">
+            <% if (data.music_url.includes('spotify:')) { 
+                const id = data.music_url.split(':').pop();
+                const type = data.music_url.includes('playlist') ? 'playlist' : 'track';
+            %>
+                <div class="spotify-card">
+                    <div class="glow-effect"></div>
+                    <iframe 
+                        src="https://open.spotify.com/embed/<%= type %>/<%= id %>?utm_source=generator&theme=0" 
+                        width="100%" height="80" frameBorder="0" 
+                        allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" 
+                        style="border-radius: 12px; position: relative; z-index: 2;" loading="lazy">
+                    </iframe>
+                </div>
+            <% } else { %>
+                <div class="mp3-pill">
+                    <i class="fa-solid fa-music animate-pulse" style="color: var(--main-color)"></i>
+                    <audio id="audio-player" loop></audio>
+                    <button onclick="toggleMute()" class="hover:scale-110 transition">
+                        <i id="vol-icon" class="fa-solid fa-volume-high"></i>
+                    </button>
+                </div>
+                <script>
+                    const a = document.getElementById('audio-player');
+                    const t = "<%= data.music_url %>".split(',');
+                    a.src = t[Math.floor(Math.random() * t.length)].trim();
+                    const p = () => a.play().catch(()=>{});
+                    document.addEventListener('click', p, { once: true });
+                    function toggleMute() {
+                        a.muted = !a.muted;
+                        document.getElementById('vol-icon').className = a.muted ? 'fa-solid fa-volume-xmark' : 'fa-solid fa-volume-high';
+                    }
+                </script>
+            <% } %>
+        </aside>
+    <% } %>
+</body>
+</html>
