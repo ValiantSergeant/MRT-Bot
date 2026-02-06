@@ -16,6 +16,7 @@
 - Films
 - IA
 - FiveM
+- Profil
 
 ## Prérequis
 - [Node.js](https://nodejs.org/fr/download/current) (22.12+)
