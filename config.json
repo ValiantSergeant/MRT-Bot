@@ -8,6 +8,7 @@
   "panelPass": "1234",
   "panelLogs": "https://discord.com/api/webhooks/",
   "panelGuildId": "TON_ID_DE_SERVEUR_ICI",
+  "bioRoute": "b",
   "geminiKey": "",
 
   "ticket": {
