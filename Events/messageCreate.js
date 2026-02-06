@@ -129,40 +129,40 @@ const antispam = async (message) => {
 };
 
 const handleCommands = async (message, bot, config) => {
-	const prefixPing = () => message.reply({
-		content: `Mon préfixe est \`${config.prefix}\`.`,
-		allowedMentions: { repliedUser: false }
-	});
+    const prefixPing = () => message.reply({
+        content: `Mon préfixe est \`${config.prefix}\`.`,
+        allowedMentions: { repliedUser: false }
+    });
 
-	let commandName;
-	let args;
+    let commandName;
+    let args;
 
-	if (message.content.startsWith(`<@${bot.user.id}>`)) {
-		args = message.content.slice(`<@${bot.user.id}>`.length).trim().split(/ +/);
-		commandName = args.shift()?.toLowerCase();
-		if (!commandName) return prefixPing();
-	} else if (message.content.startsWith(config.prefix)) {
-		args = message.content.slice(config.prefix.length).trim().split(/ +/);
-		commandName = args.shift()?.toLowerCase();
-	}
+    if (message.content.startsWith(`<@${bot.user.id}>`)) {
+        args = message.content.slice(`<@${bot.user.id}>`.length).trim().split(/ +/);
+        commandName = args.shift()?.toLowerCase();
+        if (!commandName) return prefixPing();
+    } else if (message.content.startsWith(config.prefix)) {
+        args = message.content.slice(config.prefix.length).trim().split(/ +/);
+        commandName = args.shift()?.toLowerCase();
+    }
 
-	if (!commandName) return;
+    if (!commandName) return;
 
-	const commandFile = bot.commands.get(commandName);
-	if (!commandFile) return;
+    const commandFile = bot.commands.get(commandName);
+    if (!commandFile) return;
 
-	const category = commandFile.category || "Inconnue";
+    const category = commandFile.category || "Inconnue";
 
-	db.get('SELECT enabled FROM commands_status WHERE commandName = ?', [commandName], (err, cmdRow) => {
-		if (cmdRow && cmdRow.enabled === 0) {
-			return message.reply(`⚠️ La commande \`${commandName}\` est désactivée sur ce bot.`);
-		}
+    db.get('SELECT enabled FROM commands_status WHERE commandName = ?', [commandName], (err, cmdRow) => {
+        if (cmdRow && cmdRow.enabled === 0) {
+            return message.reply(`⚠️ La commande \`${commandName}\` est désactivée sur ce bot.`);
+        }
 
-		db.get('SELECT enabled FROM modules WHERE moduleName = ?', [category], async (err, modRow) => {
-			if (modRow && modRow.enabled === 0 && commandName !== 'help') {
-				return message.reply(`⚠️ Le module **${category}** est désactivé.`);
-			}
-			await commandFile.run(bot, message, args, config);
-		});
-	});
+        db.get('SELECT enabled FROM modules WHERE moduleName = ?', [category], async (err, modRow) => {
+            if (modRow && modRow.enabled === 0 && commandName !== 'help') {
+                return message.reply(`⚠️ Le module **${category}** est désactivé.`);
+            }
+            await commandFile.run(bot, message, args, config, db);
+        });
+    });
 };
