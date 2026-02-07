@@ -2,25 +2,28 @@ import { EmbedBuilder } from 'discord.js';
 
 export const command = {
     name: 'bio',
-    helpname: 'bio <set/color/bg/music/social/text/clear>',
+    helpname: 'bio <set/color/bg/music/social/text/playlist/location/preview/clear>',
     description: 'Configure ta page de bio web personnalisée',
     run: async (bot, message, args, config, db) => {
         const subCommand = args[0]?.toLowerCase();
 
         if (!subCommand) {
             const helpEmbed = new EmbedBuilder()
-                .setTitle("🌟 Ta Page Bio Personnalisée")
-                .setDescription("Configure ta vitrine web en quelques secondes !")
+                .setTitle("🌟 Configuration de ta Bio")
+                .setDescription("Personnalise ton espace web avec ces commandes :")
                 .addFields(
-                    { name: "🔗 `+bio set <pseudo>`", value: "Définit ton URL unique" },
-                    { name: "🎨 `+bio color <#hex>`", value: "Change la couleur des boutons" },
-                    { name: "🖼️ `+bio bg <url/image>`", value: "Change l'image de fond" },
-                    { name: "🎵 `+bio music <url_directe>`", value: "Ajoute un fond sonore (mp3)" },
-                    { name: "📱 `+bio social <nom> <url>`", value: "Ajoute un réseau social" },
-                    { name: "📝 `+bio text <texte>`", value: "Modifie ta description" },
-                    { name: "🗑️ `+bio clear`", value: "Supprime ta page" }
+                    { name: "🔗 `+bio set <pseudo>`", value: "Définit ton URL unique", inline: true },
+                    { name: "🎨 `+bio color <#hex>`", value: "Couleur des accents", inline: true },
+                    { name: "🖼️ `+bio bg <url/image>`", value: "Image de fond", inline: true },
+                    { name: "🎵 `+bio music <infos>`", value: "Lecteur MP3 (lien_mp3|lien_img|titre|artiste)" },
+                    { name: "📍 `+bio location <ville>`", value: "Affiche ta localisation", inline: true },
+                    { name: "🎼 `+bio playlist <url>`", value: "Lien du bouton Spotify", inline: true },
+                    { name: "👀 `+bio preview`", value: "Voir ta page actuelle", inline: true },
+                    { name: "📱 `+bio social <nom> <url>`", value: "Ajoute un réseau", inline: true },
+                    { name: "🗑️ `+bio clear`", value: "Supprime ta page", inline: true }
                 )
-                .setColor(config.color || "#5865F2");
+                .setFooter({ text: "Configure ta page de bio web personnalisée" })
+                .setColor(config.color || "#ffffff");
             return message.reply({ embeds: [helpEmbed] });
         }
 
@@ -33,71 +36,74 @@ export const command = {
 
         if (subCommand === 'set') {
             const slug = args[1]?.toLowerCase().replace(/[^a-z0-9]/g, '');
-            if (!slug || slug.length < 3) return message.reply("❌ Pseudo invalide (min 3 carac).");
+            if (!slug || slug.length < 3) return message.reply("❌ Pseudo invalide.");
 
             db.get('SELECT userId FROM user_bios WHERE slug = ?', [slug], (err, row) => {
                 if (row && row.userId !== userId) return message.reply("❌ Ce pseudo est déjà pris.");
                 db.run('UPDATE user_bios SET slug = ? WHERE userId = ?', [slug, userId], () => {
-                    const route = config.bioRoute || "b";
                     const base = config.panelURL?.replace(/\/$/, "") || "http://localhost:3000";
-                    message.reply(`✅ Page créée : **${base}/${route}/${slug}**`);
+                    message.reply(`✅ Page créée : **${base}/${config.bioRoute || "b"}/${slug}**`);
                 });
+            });
+        }
+
+        if (subCommand === 'location') {
+            const loc = args.slice(1).join(' ');
+            if (!loc) return message.reply("❌ Fournis une localisation.");
+            db.run('UPDATE user_bios SET location = ? WHERE userId = ?', [loc, userId], () => {
+                message.reply(`📍 Localisation mise à jour : **${loc}**`);
+            });
+        }
+
+        if (subCommand === 'preview') {
+            db.get('SELECT slug, color FROM user_bios WHERE userId = ?', [userId], (err, row) => {
+                if (!row || !row.slug) return message.reply("❌ Tu n'as pas de page. Fais `+bio set`.");
+                const base = config.panelURL?.replace(/\/$/, "") || "http://localhost:3000";
+                const url = `${base}/${config.bioRoute || "b"}/${row.slug}`;
+                const embed = new EmbedBuilder()
+                    .setTitle("👀 Aperçu de ta bio")
+                    .setDescription(`Ta page est disponible ici : [${url}](${url})`)
+                    .setColor(row.color || "#ffffff")
+                    .setThumbnail(message.author.displayAvatarURL());
+                message.reply({ embeds: [embed] });
             });
         }
 
         if (subCommand === 'bg') {
-            let bgURL = null;
-
-            if (message.attachments.size > 0) {
-                bgURL = message.attachments.first().url;
-            } else if (args[1]) {
-                bgURL = args[1];
-            }
-
-            if (!bgURL) return message.reply("❌ Merci de fournir un lien d'image ou d'envoyer une image avec la commande.");
-
+            let bgURL = message.attachments.size > 0 ? message.attachments.first().url : args[1];
+            if (!bgURL) return message.reply("❌ Fournis un lien d'image.");
             db.run('UPDATE user_bios SET background_url = ? WHERE userId = ?', [bgURL, userId], () => {
-                message.reply("🖼️ Ton image de fond a été mise à jour !");
+                message.reply("🖼️ Fond mis à jour !");
             });
         }
 
         if (subCommand === 'music') {
-            let newMusic = args[1];
-            if (!newMusic) return message.reply("❌ Fournis un lien (MP3 ou Spotify).");
+            const musicData = args.slice(1).join(' ');
+            if (!musicData) return message.reply("❌ Format : `mp3|img|titre|artiste`.");
+            db.run('UPDATE user_bios SET music_url = ? WHERE userId = ?', [musicData, userId], () => {
+                message.reply("🎵 Musique mise à jour !");
+            });
+        }
 
-            if (newMusic.includes('spotify.com')) {
-                const trackMatch = newMusic.match(/track\/([a-zA-Z0-9]+)/);
-                const plMatch = newMusic.match(/playlist\/([a-zA-Z0-9]+)/);
-                if (trackMatch) newMusic = `spotify:track:${trackMatch[1]}`;
-                else if (plMatch) newMusic = `spotify:playlist:${plMatch[1]}`;
-            }
-
-            db.get('SELECT music_url FROM user_bios WHERE userId = ?', [userId], (err, row) => {
-                let currentMusic = row?.music_url;
-                let finalMusic = newMusic;
-
-                if (currentMusic && !newMusic.includes('spotify:') && !currentMusic.includes('spotify:')) {
-                    finalMusic = `${currentMusic},${newMusic}`;
-                }
-
-                db.run('UPDATE user_bios SET music_url = ? WHERE userId = ?', [finalMusic, userId], () => {
-                    message.reply(finalMusic.includes(',') ? "🎵 Musique ajoutée à ta playlist aléatoire !" : "🎵 Musique mise à jour !");
-                });
+        if (subCommand === 'playlist') {
+            const url = args[1];
+            if (!url) return message.reply("❌ Fournis un lien.");
+            db.run('UPDATE user_bios SET playlist_url = ? WHERE userId = ?', [url, userId], () => {
+                message.reply("🎼 Playlist mise à jour !");
             });
         }
 
         if (subCommand === 'color') {
             const color = args[1];
-            if (!/^#[0-9A-F]{6}$/i.test(color)) return message.reply("❌ Format hexadécimal requis (ex: #FF0000).");
+            if (!/^#[0-9A-F]{6}$/i.test(color)) return message.reply("❌ Format hexadécimal requis.");
             db.run('UPDATE user_bios SET color = ? WHERE userId = ?', [color, userId], () => {
                 message.reply(`🎨 Couleur mise à jour : \`${color}\``);
             });
         }
 
         if (subCommand === 'social') {
-            const name = args[1];
-            const url = args[2];
-            if (!name || !url) return message.reply("❌ Utilisation : `+bio social <nom> <url>`");
+            const name = args[1], url = args[2];
+            if (!name || !url) return message.reply("❌ `+bio social <nom> <url>`");
             db.get('SELECT social_links FROM user_bios WHERE userId = ?', [userId], (err, row) => {
                 let links = row?.social_links ? JSON.parse(row.social_links) : {};
                 links[name] = url;
@@ -109,7 +115,7 @@ export const command = {
 
         if (subCommand === 'text') {
             const text = args.slice(1).join(' ');
-            if (!text) return message.reply("❌ Merci de fournir un texte.");
+            if (!text) return message.reply("❌ Fournis une description.");
             db.run('UPDATE user_bios SET bio = ? WHERE userId = ?', [text, userId], () => {
                 message.reply("📝 Description mise à jour !");
             });
