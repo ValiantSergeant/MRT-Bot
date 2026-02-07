@@ -1,197 +1,255 @@
 <!DOCTYPE html>
 <html lang="fr">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><%= data.display_name %> | Bio</title>
+    <title><%= data.display_name %></title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        :root { --main-color: <%= data.color || '#5865F2' %>; }
-        
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;700&display=swap');
+
+        :root {
+            --main-color: <%=data.color || '#ffffff' %>;
+        }
+
         body {
-            background: #0a0a0a url('<%= data.background_url || "https://i.imgur.com/8Q5Y6zX.jpg" %>') no-repeat center center fixed;
+            background: #000 url('<%= data.background_url %>') no-repeat center center fixed;
             background-size: cover;
-            font-family: 'Inter', sans-serif;
             color: white;
+            font-family: 'Inter', sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            overflow: hidden;
+        }
+
+        .blur-bg {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.4);
+            backdrop-filter: blur(20px);
+            z-index: -1;
+        }
+
+        #enter-screen {
+            position: fixed;
+            inset: 0;
+            background: black;
+            z-index: 9999;
             display: flex;
             align-items: center;
             justify-content: center;
-            min-height: 100vh;
-            margin: 0;
-            overflow-x: hidden;
+            cursor: pointer;
+            transition: opacity 0.6s ease;
         }
 
-        .overlay {
-            position: fixed;
-            inset: 0;
-            background: radial-gradient(circle, rgba(0,0,0,0.4) 0%, rgba(0,0,0,0.8) 100%);
-            backdrop-filter: blur(8px);
-            z-index: -1;
-            transform: translateZ(0);
-        }
-
-        .container {
-            background: rgba(15, 15, 15, 0.6);
-            backdrop-filter: blur(15px);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            border-radius: 24px;
-            padding: 2.5rem;
-            width: 90%;
-            max-width: 420px;
-            text-align: center;
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
-            animation: fadeIn 0.6s cubic-bezier(0.23, 1, 0.32, 1);
-            will-change: transform, opacity;
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        .avatar {
-            width: 100px;
-            height: 100px;
-            border-radius: 50%;
-            margin: 0 auto 1.5rem;
-            border: 2px solid var(--main-color);
-            padding: 4px;
-            object-fit: cover;
-            transition: transform 0.3s ease;
-        }
-
-        .avatar:hover { transform: scale(1.05) rotate(3deg); }
-
-        .link-card {
+        .main-card {
             background: rgba(255, 255, 255, 0.03);
-            padding: 0.75rem 1.25rem;
-            border-radius: 16px;
-            transition: all 0.2s ease;
-            border: 1px solid rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(30px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 35px;
+            padding: 40px;
+            width: 650px;
+            box-shadow: 0 50px 100px rgba(0, 0, 0, 0.5);
+        }
+
+        .activity-box {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 20px;
+            padding: 15px;
+            border: 1px solid rgba(255, 255, 255, 0.03);
             display: flex;
             align-items: center;
-            gap: 12px;
-            margin-bottom: 10px;
+            gap: 15px;
         }
 
-        .link-card:hover {
-            background: rgba(255, 255, 255, 0.07);
-            border-color: var(--main-color);
-            transform: translateX(5px);
-        }
-
-        #player-container {
-            position: fixed;
-            bottom: 25px;
-            right: 25px;
-            width: 320px;
-            z-index: 100;
-            filter: drop-shadow(0 10px 20px rgba(0,0,0,0.5));
-        }
-
-        .spotify-card {
-            position: relative;
-            background: rgba(10, 10, 10, 0.6);
-            backdrop-filter: blur(12px);
-            border-radius: 18px;
-            padding: 5px;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            overflow: hidden;
-            transition: transform 0.3s ease;
-        }
-
-        .spotify-card:hover { transform: translateY(-5px); }
-
-        .glow-effect {
+        .floating-player {
             position: absolute;
-            inset: 0;
-            background: radial-gradient(circle at center, var(--main-color) 0%, transparent 70%);
-            opacity: 0.15;
-            pointer-events: none;
-            z-index: 1;
-        }
-
-        .mp3-pill {
-            background: rgba(10, 10, 10, 0.8);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            padding: 12px 20px;
+            bottom: -100px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 550px;
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
             border-radius: 100px;
+            padding: 10px 25px;
             display: flex;
             align-items: center;
-            justify-content: space-between;
+            gap: 15px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+        }
+
+        .progress-bar {
+            height: 3px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            flex: 1;
+            position: relative;
+            cursor: pointer;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: white;
+            border-radius: 10px;
+            width: 0%;
+        }
+
+        .status-dot {
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            position: absolute;
+            bottom: 5px;
+            right: 5px;
+            border: 3px solid #1a1a1a;
+        }
+
+        .online { background: #43b581; }
+        .dnd { background: #f04747; }
+        .idle { background: #faa61a; }
+        .offline { background: #747f8d; }
+
+        .volume-control {
+            position: fixed;
+            top: 30px;
+            left: 30px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: rgba(255, 255, 255, 0.05);
+            padding: 8px 15px;
+            border-radius: 12px;
+            backdrop-filter: blur(10px);
+        }
+
+        input[type=range] {
+            width: 60px;
+            accent-color: white;
         }
     </style>
 </head>
+
 <body>
-    <div class="overlay"></div>
-
-    <main class="container">
-        <img src="<%= data.avatar_url %>" alt="Avatar" class="avatar" loading="lazy">
-        <h1 class="text-2xl font-bold mb-2 tracking-tight"><%= data.display_name %></h1>
-        <p class="text-gray-300 text-sm leading-relaxed mb-6"><%= data.bio || "Welcome to my profile" %></p>
-
-        <nav class="links">
-            <% if (socials) { %>
-                <% Object.keys(socials).forEach(key => { 
-                    const url = socials[key].toLowerCase();
-                    let icon = 'fa-solid fa-link';
-                    if (url.includes('github')) icon = 'fa-brands fa-github';
-                    else if (url.includes('twitter') || url.includes('x.com')) icon = 'fa-brands fa-x-twitter';
-                    else if (url.includes('instagram')) icon = 'fa-brands fa-instagram';
-                    else if (url.includes('discord')) icon = 'fa-brands fa-discord';
-                    else if (url.includes('spotify')) icon = 'fa-brands fa-spotify';
-                %>
-                    <a href="<%= socials[key] %>" target="_blank" class="link-card">
-                        <i class="<%= icon %> text-lg" style="color: var(--main-color)"></i>
-                        <span class="text-sm font-medium"><%= key %></span>
-                    </a>
-                <% }); %>
-            <% } %>
-        </nav>
-
-        <footer class="mt-6 flex items-center justify-center gap-2 text-xs text-gray-500">
-            <i class="fa-solid fa-eye"></i> <%= data.views %> views
-        </footer>
-    </main>
-
-    <% if (data.music_url) { %>
-        <aside id="player-container">
-            <% if (data.music_url.includes('spotify:')) { 
-                const id = data.music_url.split(':').pop();
-                const type = data.music_url.includes('playlist') ? 'playlist' : 'track';
-            %>
-                <div class="spotify-card">
-                    <div class="glow-effect"></div>
-                    <iframe 
-                        src="https://open.spotify.com/embed/<%= type %>/<%= id %>?utm_source=generator&theme=0" 
-                        width="100%" height="80" frameBorder="0" 
-                        allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" 
-                        style="border-radius: 12px; position: relative; z-index: 2;" loading="lazy">
-                    </iframe>
+    <div id="enter-screen" onclick="startApp()">
+        <p class="text-white/20 text-[10px] tracking-[0.8em] uppercase">Click to enter</p>
+    </div>
+    <div class="blur-bg"></div>
+    <div class="volume-control">
+        <i id="vol-icon" class="fa-solid fa-volume-high text-xs opacity-50"></i>
+        <input type="range" min="0" max="1" step="0.1" value="0.5" oninput="adjustVolume(this.value)">
+    </div>
+    <div class="relative">
+        <div class="main-card text-center">
+            <div class="flex flex-col items-center mb-10">
+                <div class="relative mb-4">
+                    <img src="<%= userAvatar %>" class="w-28 h-28 rounded-full shadow-2xl border border-white/10">
+                    <div class="status-dot <%= presence?.status || 'offline' %>"></div>
                 </div>
-            <% } else { %>
-                <div class="mp3-pill">
-                    <i class="fa-solid fa-music animate-pulse" style="color: var(--main-color)"></i>
-                    <audio id="audio-player" loop></audio>
-                    <button onclick="toggleMute()" class="hover:scale-110 transition">
-                        <i id="vol-icon" class="fa-solid fa-volume-high"></i>
-                    </button>
+                <h1 class="text-4xl font-bold tracking-tighter uppercase">
+                    <%= data.display_name %>
+                </h1>
+                <% if (data.location) { %>
+                    <p class="text-[10px] font-bold opacity-30 uppercase tracking-[0.4em] mt-3">
+                        <i class="fa-solid fa-location-dot mr-1"></i>
+                        <%= data.location %>
+                    </p>
+                <% } %>
+            </div>
+            <div class="grid grid-cols-2 gap-4 mb-8">
+                <div class="activity-box text-left overflow-hidden">
+                    <div class="relative w-14 h-14 flex-shrink-0">
+                        <% let activityImg=userAvatar; if (presence?.activities[0]?.assets?.largeImage) { let
+                            assetId=presence.activities[0].assets.largeImage; if (assetId.includes('spotify:')) {
+                            activityImg=`https://i.scdn.co/image/${assetId.split(':')[1]}`; } else {
+                            activityImg=`https://cdn.discordapp.com/app-assets/${presence.activities[0].applicationId}/${assetId}.png`;
+                            } } %>
+                        <img src="<%= activityImg %>" class="w-full h-full rounded-xl object-cover shadow-lg">
+                        <div class="status-dot <%= presence?.status || 'offline' %>"
+                            style="width:12px; height:12px; border-width:2px; bottom:-2px; right:-2px;"></div>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <p class="text-[11px] font-bold truncate uppercase tracking-tight">
+                            <%= presence?.activities[0]?.name || 'Inactif' %>
+                        </p>
+                        <p class="text-[10px] opacity-60 truncate">
+                            <%= presence?.activities[0]?.details || 'Zzz...' %>
+                        </p>
+                        <p class="text-[9px] opacity-40 truncate uppercase font-bold">
+                            <%= presence?.activities[0]?.state ? 'BY ' + presence.activities[0].state : '' %>
+                        </p>
+                    </div>
                 </div>
-                <script>
-                    const a = document.getElementById('audio-player');
-                    const t = "<%= data.music_url %>".split(',');
-                    a.src = t[Math.floor(Math.random() * t.length)].trim();
-                    const p = () => a.play().catch(()=>{});
-                    document.addEventListener('click', p, { once: true });
-                    function toggleMute() {
-                        a.muted = !a.muted;
-                        document.getElementById('vol-icon').className = a.muted ? 'fa-solid fa-volume-xmark' : 'fa-solid fa-volume-high';
-                    }
-                </script>
-            <% } %>
-        </aside>
-    <% } %>
+                <a href="<%= data.playlist_url ? data.playlist_url : '#' %>"
+                    target="_blank"
+                    class="activity-box justify-center items-center gap-3 hover:bg-white/10 transition-all cursor-pointer">
+                    <i class="fa-brands fa-spotify text-2xl text-green-500"></i>
+                    <p class="text-[10px] font-bold uppercase tracking-widest">Playlist</p>
+                </a>
+            </div>
+            <div class="flex justify-center gap-8 items-center pt-6 border-t border-white/5">
+                <% if (socials) { %>
+                    <% Object.keys(socials).forEach(key=> {
+                        const url = socials[key].toLowerCase();
+                        let icon = 'fa-solid fa-link';
+                        if (url.includes('github')) icon = 'fa-brands fa-github';
+                        else if (url.includes('twitter') || url.includes('x.com')) icon = 'fa-brands fa-x-twitter';
+                        else if (url.includes('instagram')) icon = 'fa-brands fa-instagram';
+                        else if (url.includes('discord')) icon = 'fa-brands fa-discord';
+                        %>
+                        <a href="<%= socials[key] %>" target="_blank"
+                            class="text-2xl opacity-30 hover:opacity-100 transition-all">
+                            <i class="<%= icon %>"></i>
+                        </a>
+                    <% }); %>
+                <% } %>
+            </div>
+        </div>
+        <% if (data.music_url) { let [mUrl, mImg, mTitle, mArtist]=data.music_url.split('|'); %>
+            <div class="floating-player">
+                <img src="<%= mImg || userAvatar %>" class="w-10 h-10 rounded-full animate-spin-slow object-cover">
+                <div class="flex-1 overflow-hidden text-left">
+                    <div class="flex justify-between text-[9px] font-bold uppercase tracking-widest mb-2 opacity-50">
+                        <span class="truncate"><%= mArtist || 'Artiste' %> - <%= mTitle || 'Titre' %></span>
+                        <span id="timer">0:00</span>
+                    </div>
+                    <div class="progress-bar" onclick="seek(event)">
+                        <div id="fill" class="progress-fill"></div>
+                    </div>
+                </div>
+                <button onclick="togglePlay()"><i id="btn-play" class="fa-solid fa-pause opacity-60"></i></button>
+                <audio id="track" src="<%= mUrl %>" loop></audio>
+            </div>
+        <% } %>
+    </div>
+    <script>
+        const audio = document.getElementById('track');
+        function startApp() {
+            document.getElementById('enter-screen').style.opacity = '0';
+            setTimeout(() => document.getElementById('enter-screen').style.display = 'none', 600);
+            if (audio) audio.play();
+        }
+        function togglePlay() {
+            if (audio.paused) { audio.play(); document.getElementById('btn-play').className = 'fa-solid fa-pause'; }
+            else { audio.pause(); document.getElementById('btn-play').className = 'fa-solid fa-play'; }
+        }
+        function adjustVolume(v) { if (audio) audio.volume = v; }
+        if (audio) {
+            audio.ontimeupdate = () => {
+                document.getElementById('fill').style.width = (audio.currentTime / audio.duration) * 100 + '%';
+                let m = Math.floor(audio.currentTime / 60), s = Math.floor(audio.currentTime % 60);
+                document.getElementById('timer').innerText = `${m}:${s < 10 ? '0' : ''}${s}`;
+            };
+        }
+        function seek(e) {
+            const rect = e.currentTarget.getBoundingClientRect();
+            audio.currentTime = ((e.clientX - rect.left) / rect.width) * audio.duration;
+        }
+    </script>
 </body>
 </html>
