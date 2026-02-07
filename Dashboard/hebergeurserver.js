@@ -264,7 +264,9 @@ app.get(`/${bioPath}/:slug`, (req, res) => {
     db.get('SELECT * FROM user_bios WHERE slug = ?', [slug], (err, row) => {
         if (!row) return res.status(404).send("Cette bio n'existe pas.");
 
-        if (!req.session.viewed_bios) req.session.viewed_bios = [];
+        if (!req.session.viewed_bios) {
+            req.session.viewed_bios = [];
+        }
 
         if (!req.session.viewed_bios.includes(slug)) {
             db.run('UPDATE user_bios SET views = views + 1 WHERE slug = ?', [slug]);
