@@ -24,7 +24,7 @@
 - [Token](https://discord.com/developers/applications)
 
 ## Installation
-1. Configurer le config.json / Gemini API : https://aistudio.google.com/api-keys
+1. Configurer le config.json / Gemini API : https://aistudio.google.com/api-keys / Ajouter ton bot à tes applications ( perm minimum : identify)
 2. Installer les dépendances, en ouvrant l'invite de commande
 ```bash
 npm install
