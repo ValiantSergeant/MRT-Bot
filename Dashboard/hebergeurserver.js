@@ -270,28 +270,41 @@ app.post('/toggle-command', checkAuth, (req, res) => {
 });
 
 const bioPath = config.bioRoute || "b";
-app.get(`/${bioPath}/:slug`, (req, res) => {
+app.get(`/${bioPath}/:slug`, async (req, res) => {
     const slug = req.params.slug;
-    
-    db.get('SELECT * FROM user_bios WHERE slug = ?', [slug], (err, row) => {
+
+    db.get('SELECT * FROM user_bios WHERE slug = ?', [slug], async (err, row) => {
         if (!row) return res.status(404).send("Cette bio n'existe pas.");
 
-        if (!req.session.viewed_bios) {
-            req.session.viewed_bios = [];
-        }
-
-        if (!req.session.viewed_bios.includes(slug)) {
-            db.run('UPDATE user_bios SET views = views + 1 WHERE slug = ?', [slug]);
-            req.session.viewed_bios.push(slug);
-        }
-
         let socials = {};
-        try { socials = row.social_links ? JSON.parse(row.social_links) : {}; } catch (e) {}
-        
-        res.render('bio', { 
-            data: row, 
-            socials: socials,
-            config: config 
+        try {
+            socials = row.social_links ? JSON.parse(row.social_links) : {};
+        } catch {}
+
+        let presence = null;
+        let userAvatar = 'https://cdn.discordapp.com/embed/avatars/0.png';
+
+        try {
+            const guild = global.client.guilds.cache.get(config.panelGuildId);
+            if (guild && row.userId) {
+                const member = await guild.members.fetch(row.userId);
+
+                presence = member.presence;
+                userAvatar = member.user.displayAvatarURL({
+                    extension: 'png',
+                    size: 512
+                });
+            }
+        } catch (e) {
+            console.warn("Impossible de récupérer la présence :", e.message);
+        }
+
+        res.render('bio', {
+            data: row,
+            socials,
+            config,
+            presence,
+            userAvatar
         });
     });
 });
