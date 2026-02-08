@@ -153,14 +153,14 @@ const handleCommands = async (message, bot, config) => {
 
     const category = commandFile.category || "Inconnue";
 
-    db.get('SELECT enabled FROM commands_status WHERE commandName = ?', [commandName], (err, cmdRow) => {
+    db.get('SELECT enabled FROM commands_status WHERE commandName = ? AND guildId = ?', [commandName, message.guild.id], (err, cmdRow) => {
         if (cmdRow && cmdRow.enabled === 0) {
-            return message.reply(`⚠️ La commande \`${commandName}\` est désactivée sur ce bot.`);
+            return message.reply(`⚠️ La commande \`${commandName}\` est désactivée sur ce serveur.`);
         }
 
-        db.get('SELECT enabled FROM modules WHERE moduleName = ?', [category], async (err, modRow) => {
+        db.get('SELECT enabled FROM modules WHERE moduleName = ? AND guildId = ?', [category, message.guild.id], async (err, modRow) => {
             if (modRow && modRow.enabled === 0 && commandName !== 'help') {
-                return message.reply(`⚠️ Le module **${category}** est désactivé.`);
+                return message.reply(`⚠️ Le module **${category}** est désactivé sur ce serveur.`);
             }
             await commandFile.run(bot, message, args, config, db);
         });
