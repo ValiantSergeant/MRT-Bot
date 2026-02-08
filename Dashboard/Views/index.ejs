@@ -41,7 +41,7 @@
             animation: blink-red 1.5s infinite;
         }
 
-        body { font-family: sans-serif; background: var(--bg-main); color: var(--text-primary); padding: 40px; margin: 0; }
+        body { font-family: sans-serif; background: var(--bg-main); color: var(--text-primary); margin: 0; padding: 0; overflow: hidden; height: 100vh; width: 100vw; }
         .container { max-width: 1200px; margin: auto; }
         .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; background: var(--bg-header); padding: 20px; border-radius: 8px; }
         .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin-bottom: 30px; }
@@ -81,18 +81,46 @@
         .msg.bot { align-self: flex-start; background: #333; color: #ddd; border: 1px solid #444; }
         .ai-footer { padding: 10px; background: #2d2d2d; border-top: 1px solid #444; }
         .ai-input { width: 100%; background: #3c3c3c; border: 1px solid #555; color: white; padding: 8px; border-radius: 4px; resize: none; font-size: 12px; box-sizing: border-box; outline: none; }
-    </style>
+
+        .main-wrapper { display: flex; height: 100vh; width: 100%; overflow: hidden; }
+        .sidebar-guilds { width: 72px; background: #1e1f22; display: flex; flex-direction: column; align-items: center; padding-top: 12px; gap: 8px; overflow-y: auto; overflow-x: hidden; flex-shrink: 0; transition: width 0.3s ease, padding 0.3s ease; }
+        .sidebar-guilds.collapsed { width: 0; padding-left: 0; padding-right: 0; overflow: hidden; }
+        .guild-item { width: 48px; height: 48px; border-radius: 50%; cursor: pointer; transition: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55); position: relative; display: flex; align-items: center; justify-content: center; flex-shrink: 0; overflow: hidden; background: #313338; }
+        .guild-item img { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; transition: border-radius 0.3s ease, transform 0.2s ease; }
+        .guild-item:hover { transform: translateY(-4px); box-shadow: 0 4px 15px rgba(88, 101, 242, 0.5); }
+        .guild-item:hover img, .guild-item.active img { border-radius: 15px; }
+        .guild-item:active { transform: translateY(1px) scale(0.85); }
+        .guild-item.active { border-radius: 15px; box-shadow: 0 4px 15px rgba(88, 101, 242, 0.3); }
+        .guild-item.active::before { content: ""; position: absolute; left: 0; width: 4px; height: 32px; background: white; border-radius: 0 4px 4px 0; margin-left: -12px; transition: all 0.3s ease; }
+        .content-area { flex: 1; overflow-y: auto; overflow-x: hidden; padding: 20px; background: #313338; height: 100vh; box-sizing: border-box; }
+        .toggle-sidebar-btn { position: fixed; bottom: 20px; left: 16px; z-index: 1000; background: var(--blurple); border: none; color: white; width: 45px; height: 45px; border-radius: 12px; cursor: pointer; box-shadow: 0 4px 15px rgba(75, 109, 202, 0.4); display: flex; align-items: center; justify-content: center; font-size: 20px; transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        .toggle-sidebar-btn:hover { transform: scale(1.1); background: #4752c4; }
+        .toggle-sidebar-btn.is-closed { transform: rotate(180deg); background: #4752c4; left: 16px; border: 1px solid var(--blurple); }
+        .toggle-sidebar-btn.is-closed:hover { transform: scale(1.1) rotate(180deg); }
+</style>
 </head>
 
 <body>
-    <div class="container">
-        <div class="header">
-            <h1>MRT-Bot Dashboard</h1>
-            <div style="display: flex; gap: 10px;">
-                <button class="btn-action" style="background: var(--blurple)" onclick="toggleTheme()">🌓 Thème</button>
-                <a href="/login" class="btn-action" style="background: var(--danger); text-decoration: none;">Déconnexion</a>
-            </div>
+
+    <div class="main-wrapper">
+        <button class="toggle-sidebar-btn" onclick="toggleSidebar()">☰</button>
+
+        <div class="sidebar-guilds" id="guildSidebar">
+    <% guilds.forEach(guild => { %>
+        <div class="guild-item <%= (locals.currentGuildId && guild.id === currentGuildId) ? 'active' : '' %>" 
+             onclick="window.location.href='/?guild=<%= guild.id %>'" 
+             title="<%= guild.name %>">
+            <% if (guild.icon && guild.icon.includes('http')) { %>
+                <img src="<%= guild.icon %>" alt="<%= guild.name %>">
+            <% } else { %>
+                <div class="guild-placeholder"><%= guild.name.substring(0, 2).toUpperCase() %></div>
+            <% } %>
         </div>
+    <% }); %>
+</div>
+
+        <div class="content-area">
+            <div class="container">
 
         <div class="stats-grid">
             <div class="stat-card"><span>📡 Latence</span><strong id="stat-ping"><%= stats.ping %>ms</strong></div>
@@ -152,7 +180,6 @@
         </table>
 
         <div id="panelLogsBox" class="console-box">En attente d'actions...</div>
-    </div>
 
     <div id="editorModal" class="modal">
         <div class="modal-content" style="max-width: 1300px;">
@@ -444,6 +471,20 @@
             document.documentElement.setAttribute('data-theme', t); localStorage.setItem('theme', t);
         }
         document.documentElement.setAttribute('data-theme', localStorage.getItem('theme') || 'dark');
+
+    function toggleSidebar() {
+    const sidebar = document.getElementById('guildSidebar');
+    const btn = document.querySelector('.toggle-sidebar-btn');
+    sidebar.classList.toggle('collapsed');
+    btn.classList.toggle('is-closed');
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    if (localStorage.getItem('sidebarCollapsed') === 'true') {
+        document.getElementById('guildSidebar').classList.add('collapsed');
+    }
+});
+
     </script>
 </body>
 </html>
