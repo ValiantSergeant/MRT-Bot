@@ -43,7 +43,7 @@ const dbcreate = () => {
             `CREATE TABLE IF NOT EXISTS fivem_status (guildId TEXT PRIMARY KEY, channelId TEXT, messageId TEXT, cfxId TEXT)`,
             `CREATE TABLE IF NOT EXISTS poj (guildId TEXT, channelId TEXT, message TEXT DEFAULT '{user}', time INTEGER DEFAULT 5000, PRIMARY KEY (guildId, channelId))`,
             `CREATE TABLE IF NOT EXISTS modules (guildId TEXT, moduleName TEXT, enabled INTEGER DEFAULT 1,PRIMARY KEY (guildId, moduleName))`,
-            `CREATE TABLE IF NOT EXISTS commands_status ( commandName TEXT PRIMARY KEY, enabled INTEGER DEFAULT 1)`,
+            `CREATE TABLE IF NOT EXISTS commands_status ( commandName TEXT, guildId TEXT, enabled INTEGER DEFAULT 1, PRIMARY KEY (commandName, guildId) )`,
             `CREATE TABLE IF NOT EXISTS user_bios ( userId TEXT PRIMARY KEY, slug TEXT UNIQUE, bio TEXT, display_name TEXT, avatar_url TEXT, banner_url TEXT, color TEXT DEFAULT "#5865F2", views INTEGER DEFAULT 0, social_links TEXT, music_url TEXT, background_url TEXT, custom_status TEXT, playlist_url TEXT, location TEXT )`,            
             `CREATE TABLE IF NOT EXISTS antiraid (
                 guild TEXT PRIMARY KEY, 
