@@ -95,24 +95,39 @@ app.post('/login', (req, res) => {
 app.get('/', checkAuth, async (req, res) => {
     try {
         const allCommands = await getAllCommands();
+        
+        const guilds = global.client?.guilds.cache.map(g => ({
+            id: g.id,
+            name: g.name,
+            icon: g.iconURL({ dynamic: true, size: 128 }) || 'https://i.ytimg.com/vi/4VxEPhl03ww/maxresdefault.jpg'
+        })) || [];
+        
+        const selectedGuildId = req.query.guild || (guilds.length > 0 ? guilds[0].id : "GLOBAL");
+
         const stats = {
             ping: global.client?.ws.ping || 0,
+            serverName: global.client?.guilds.cache.get(selectedGuildId)?.name || "Global",
             guilds: global.client?.guilds.cache.size || 0,
             users: global.client?.users.cache.size || 0,
             ram: (process.memoryUsage().heapUsed / 1024 / 1024).toFixed(2)
         };
 
-        db.all('SELECT * FROM modules', (err, moduleRows) => {
-            db.all('SELECT * FROM commands_status', (err2, cmdStatusRows) => {
+        db.all('SELECT * FROM modules WHERE guildId = ?', [selectedGuildId], (err, moduleRows) => {
+            db.all('SELECT * FROM commands_status WHERE guildId = ?', [selectedGuildId], (err2, cmdStatusRows) => {
                 res.render('index', { 
                     modules: moduleRows || [],
                     allCommands: allCommands || [],
                     cmdStatus: cmdStatusRows || [],
-                    stats: stats
+                    stats: stats,
+                    guilds: guilds,
+                    currentGuildId: selectedGuildId
                 });
             });
         });
-    } catch (error) { res.send("Erreur de chargement."); }
+    } catch (error) { 
+        console.error(error);
+        res.status(500).send("Erreur de chargement du Dashboard."); 
+    }
 });
 
 app.get('/api/stats', async (req, res) => {
