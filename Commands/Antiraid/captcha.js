@@ -127,18 +127,18 @@ export const command = {
 			const roleId = row.id;
 
 			const vrf = new EmbedBuilder()
-				.setTitle(config.ctitre)
-				.setDescription(config.cdescription)
-				.setColor(config.ccolor);
+				.setTitle(config.captcha.titre)
+				.setDescription(config.captcha.description)
+				.setColor(config.captcha.color);
 
-			if (config.cimage && config.cimage.trim() !== '') {
-				vrf.setImage(config.cimage);
+			if (config.captcha.image && config.captcha.image.trim() !== '') {
+				vrf.setImage(config.captcha.image);
 			}
 
 			const button = new ButtonBuilder()
-				.setCustomId('cbutton')
+				.setCustomId('button')
 				.setStyle(ButtonStyle.Secondary)
-				.setEmoji(config.cemoji);
+				.setEmoji(config.captcha.emoji);
 
 			const arw = new ActionRowBuilder().addComponents(button);
 
