@@ -18,7 +18,8 @@ const categories = [
     'Antiraid',
     'Contact',
     'Paramètres',
-    'FiveM'
+    'FiveM',
+    'Codex'
 ];
 
 export const command = {
