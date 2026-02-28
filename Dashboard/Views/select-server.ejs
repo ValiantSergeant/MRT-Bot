@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MRT — Sélection du serveur</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --blurple: #5865F2;
+            --blurple-dim: rgba(88,101,242,0.15);
+            --blurple-glow: rgba(88,101,242,0.3);
+            --bg: #08090d;
+            --surface: rgba(255,255,255,0.04);
+            --surface-hover: rgba(255,255,255,0.07);
+            --border: rgba(255,255,255,0.07);
+            --border-strong: rgba(255,255,255,0.14);
+            --text: #e8e9f0;
+            --text-dim: rgba(232,233,240,0.5);
+            --text-muted: rgba(232,233,240,0.28);
+        }
+
+        body {
+            font-family: 'Space Grotesk', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+
+        /* Ambient orbs */
+        .orb { position: fixed; border-radius: 50%; filter: blur(90px); opacity: 0.14; pointer-events: none; animation: drift 14s ease-in-out infinite alternate; }
+        .orb-1 { width: 550px; height: 550px; background: #5865F2; top: -20%; left: -10%; }
+        .orb-2 { width: 300px; height: 300px; background: #7c5ef5; bottom: -10%; right: 0; animation-delay: -5s; }
+        @keyframes drift { 0% { transform: translate(0,0); } 100% { transform: translate(25px,-20px); } }
+
+        body::before {
+            content: '';
+            position: fixed; inset: 0; z-index: 0;
+            background-image:
+                linear-gradient(rgba(255,255,255,0.012) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255,255,255,0.012) 1px, transparent 1px);
+            background-size: 40px 40px;
+            pointer-events: none;
+        }
+
+        .wrapper {
+            position: relative; z-index: 1;
+            display: flex; flex-direction: column;
+            align-items: center; gap: 28px;
+            animation: fadeUp 0.6s cubic-bezier(0.16,1,0.3,1) both;
+            width: 100%; max-width: 620px;
+            padding: 20px;
+        }
+        @keyframes fadeUp { from { opacity:0; transform:translateY(20px); } to { opacity:1; transform:translateY(0); } }
+
+        /* Brand */
+        .brand {
+            font-family: 'Space Mono', monospace;
+            font-size: 11px; letter-spacing: 0.25em;
+            text-transform: uppercase; color: var(--text-muted);
+            display: flex; align-items: center; gap: 10px;
+        }
+        .brand-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--blurple); box-shadow: 0 0 8px var(--blurple); animation: pulse 2s ease-in-out infinite; }
+        @keyframes pulse { 0%,100% { box-shadow: 0 0 6px var(--blurple); } 50% { box-shadow: 0 0 14px var(--blurple); } }
+
+        /* Card */
+        .card {
+            width: 100%;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 22px;
+            padding: 36px;
+            backdrop-filter: blur(24px);
+            box-shadow: 0 0 80px var(--blurple-glow), 0 32px 64px rgba(0,0,0,0.5);
+        }
+
+        .card-head { margin-bottom: 28px; }
+        .card-label {
+            font-family: 'Space Mono', monospace;
+            font-size: 10px; letter-spacing: 0.2em;
+            text-transform: uppercase; color: var(--text-muted);
+            margin-bottom: 8px;
+        }
+        .card-title {
+            font-family: 'Space Mono', monospace;
+            font-size: 22px; font-weight: 700;
+            line-height: 1.3; color: var(--text);
+        }
+        .card-title span { color: var(--blurple); }
+        .card-sub { font-size: 13px; color: var(--text-dim); margin-top: 6px; font-weight: 300; }
+
+        /* Guild grid */
+        .guild-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+            gap: 10px;
+        }
+
+        .guild-card {
+            display: flex; align-items: center; gap: 14px;
+            background: rgba(255,255,255,0.03);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 14px 16px;
+            text-decoration: none; color: var(--text);
+            transition: all 0.2s cubic-bezier(0.34,1.56,0.64,1);
+            position: relative; overflow: hidden;
+        }
+        .guild-card::before {
+            content: ''; position: absolute; inset: 0;
+            background: linear-gradient(135deg, rgba(88,101,242,0.06), transparent);
+            opacity: 0; transition: opacity 0.2s;
+        }
+        .guild-card:hover { border-color: rgba(88,101,242,0.4); transform: translateY(-2px); box-shadow: 0 8px 24px rgba(88,101,242,0.2); }
+        .guild-card:hover::before { opacity: 1; }
+        .guild-card:active { transform: translateY(0) scale(0.98); }
+
+        .guild-avatar {
+            width: 44px; height: 44px;
+            border-radius: 12px; object-fit: cover;
+            background: linear-gradient(135deg, var(--blurple), #7c5ef5);
+            flex-shrink: 0;
+        }
+        .guild-avatar-placeholder {
+            width: 44px; height: 44px;
+            border-radius: 12px;
+            background: linear-gradient(135deg, var(--blurple), #7c5ef5);
+            display: flex; align-items: center; justify-content: center;
+            font-family: 'Space Mono', monospace;
+            font-weight: 700; font-size: 14px; color: white;
+            flex-shrink: 0;
+        }
+        .guild-info { flex: 1; min-width: 0; }
+        .guild-name {
+            font-family: 'Space Mono', monospace;
+            font-size: 13px; font-weight: 700;
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        }
+        .guild-sub { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+        .guild-arrow { color: var(--text-muted); font-size: 14px; transition: transform 0.2s, color 0.2s; }
+        .guild-card:hover .guild-arrow { transform: translateX(3px); color: #a5abff; }
+
+        /* Empty state */
+        .empty {
+            text-align: center; padding: 32px;
+            color: var(--text-muted); font-size: 13px;
+        }
+        .empty-icon { font-size: 36px; margin-bottom: 10px; opacity: 0.4; }
+
+        .footer-note { font-family: 'Space Mono', monospace; font-size: 10px; color: var(--text-muted); opacity: 0.5; letter-spacing: 0.1em; }
+    </style>
+</head>
+<body>
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+
+    <div class="wrapper">
+        <div class="brand">
+            <div class="brand-dot"></div>
+            MRT-Bot Dashboard
+            <div class="brand-dot"></div>
+        </div>
+
+        <div class="card">
+            <div class="card-head">
+                <div class="card-label">// étape 01</div>
+                <div class="card-title">Choisir un<br><span>serveur.</span></div>
+                <div class="card-sub">Sélectionnez le serveur Discord que vous souhaitez gérer.</div>
+            </div>
+
+            <% if (guilds && guilds.length > 0) { %>
+                <div class="guild-grid">
+                    <% guilds.forEach(g => { %>
+                        <a href="/?guild=<%= g.id %>" class="guild-card">
+                            <% if (g.icon) { %>
+                                <img src="<%= g.icon %>" class="guild-avatar" alt="<%= g.name %>">
+                            <% } else { %>
+                                <div class="guild-avatar-placeholder"><%= g.name.substring(0,2).toUpperCase() %></div>
+                            <% } %>
+                            <div class="guild-info">
+                                <div class="guild-name"><%= g.name %></div>
+                                <div class="guild-sub">ID: <%= g.id %></div>
+                            </div>
+                            <span class="guild-arrow">→</span>
+                        </a>
+                    <% }); %>
+                </div>
+            <% } else { %>
+                <div class="empty">
+                    <div class="empty-icon">🤖</div>
+                    Aucun serveur disponible.<br>Le bot n'est présent dans aucun serveur.
+                </div>
+            <% } %>
+        </div>
+
+        <div class="footer-note">Accès restreint — usage interne uniquement</div>
+    </div>
+</body>
+</html>
