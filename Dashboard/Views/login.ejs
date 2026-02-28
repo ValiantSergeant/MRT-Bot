@@ -3,154 +3,341 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Connexion au Panel</title>
+    <title>MRT — Connexion</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --blurple: #5865F2;
+            --blurple-glow: rgba(88, 101, 242, 0.35);
+            --danger: #f04747;
+            --bg: #0a0b0f;
+            --surface: rgba(255,255,255,0.04);
+            --border: rgba(255,255,255,0.07);
+            --text: #f0f0f5;
+            --muted: rgba(255,255,255,0.35);
+        }
+
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #36393f;
+            font-family: 'Space Grotesk', sans-serif;
+            background: var(--bg);
+            min-height: 100vh;
             display: flex;
-            justify-content: center;
             align-items: center;
-            height: 100vh;
-            margin: 0;
-            color: white;
+            justify-content: center;
+            overflow: hidden;
+            color: var(--text);
         }
 
-        .login-card {
-            background-color: #2f3136;
-            padding: 32px;
-            border-radius: 8px;
-            box-shadow: 0 8px 16px rgba(0,0,0,0.2);
-            width: 100%;
-            max-width: 400px;
-            text-align: center;
+        /* Ambient background */
+        .bg-orbs {
+            position: fixed; inset: 0; z-index: 0; pointer-events: none;
         }
-
-        .stat-icon-img {
-            width: 70px;
-            height: 70px;
+        .orb {
+            position: absolute;
             border-radius: 50%;
-            margin-bottom: 10px;
-            background: #202225;
-            object-fit: cover;
+            filter: blur(80px);
+            opacity: 0.18;
+            animation: drift 12s ease-in-out infinite alternate;
+        }
+        .orb-1 { width: 500px; height: 500px; background: #5865F2; top: -15%; left: -10%; animation-delay: 0s; }
+        .orb-2 { width: 350px; height: 350px; background: #7c5ef5; bottom: -10%; right: -5%; animation-delay: -4s; }
+        .orb-3 { width: 250px; height: 250px; background: #4752c4; top: 50%; left: 55%; animation-delay: -8s; }
+
+        @keyframes drift {
+            0% { transform: translate(0, 0) scale(1); }
+            100% { transform: translate(30px, -20px) scale(1.08); }
         }
 
-        .server-info {
-            margin-bottom: 20px;
+        /* Grid texture */
+        body::before {
+            content: '';
+            position: fixed; inset: 0; z-index: 0;
+            background-image: 
+                linear-gradient(rgba(255,255,255,0.015) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255,255,255,0.015) 1px, transparent 1px);
+            background-size: 40px 40px;
+            pointer-events: none;
+        }
+
+        .wrapper {
+            position: relative; z-index: 1;
             display: flex;
             flex-direction: column;
             align-items: center;
+            gap: 32px;
+            animation: fadeUp 0.7s cubic-bezier(0.16, 1, 0.3, 1) both;
         }
 
-        .server-info span {
-            color: #b9bbbe;
+        @keyframes fadeUp {
+            from { opacity: 0; transform: translateY(24px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Top brand badge */
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-family: 'Space Mono', monospace;
+            font-size: 13px;
+            font-weight: 700;
+            letter-spacing: 0.2em;
+            text-transform: uppercase;
+            color: var(--muted);
+        }
+        .brand-dot {
+            width: 6px; height: 6px;
+            border-radius: 50%;
+            background: var(--blurple);
+            box-shadow: 0 0 8px var(--blurple);
+            animation: pulse 2s ease-in-out infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; box-shadow: 0 0 8px var(--blurple); }
+            50% { opacity: 0.6; box-shadow: 0 0 16px var(--blurple); }
+        }
+
+        /* Card */
+        .card {
+            width: 420px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 24px;
+            padding: 40px;
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            box-shadow: 
+                0 0 0 1px rgba(255,255,255,0.03) inset,
+                0 32px 64px rgba(0,0,0,0.5),
+                0 0 80px var(--blurple-glow);
+        }
+
+        /* Server info at top */
+        .server-info {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            padding: 14px 16px;
+            background: rgba(255,255,255,0.03);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            margin-bottom: 32px;
+        }
+        .server-avatar {
+            width: 40px; height: 40px;
+            border-radius: 12px;
+            background: #202225;
+            object-fit: cover;
+            flex-shrink: 0;
+        }
+        .server-avatar-placeholder {
+            width: 40px; height: 40px;
+            border-radius: 12px;
+            background: linear-gradient(135deg, #5865F2, #4752c4);
+            display: flex; align-items: center; justify-content: center;
+            font-family: 'Space Mono', monospace;
+            font-weight: 800;
             font-size: 14px;
+        }
+        .server-meta {
+            flex: 1;
+        }
+        .server-label {
+            font-size: 10px;
+            font-weight: 500;
+            letter-spacing: 0.12em;
             text-transform: uppercase;
-            font-weight: bold;
+            color: var(--muted);
+            margin-bottom: 2px;
+        }
+        .server-name {
+            font-family: 'Space Mono', monospace;
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--text);
+        }
+        .server-status {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 10px;
+            color: #43b581;
+            font-weight: 500;
+        }
+        .status-dot-green {
+            width: 5px; height: 5px; border-radius: 50%; background: #43b581;
+            box-shadow: 0 0 5px #43b581;
         }
 
-        h1 {
-            font-size: 24px;
-            margin-bottom: 8px;
-            color: #ffffff;
+        /* Heading */
+        .card-title {
+            font-family: 'Space Mono', monospace;
+            font-size: 26px;
+            font-weight: 800;
+            line-height: 1.2;
+            margin-bottom: 6px;
+        }
+        .card-title span { color: var(--blurple); }
+        .card-sub {
+            font-size: 13px;
+            color: var(--muted);
+            margin-bottom: 32px;
+            font-weight: 300;
         }
 
-        p {
-            color: #b9bbbe;
-            margin-bottom: 24px;
-        }
-
-        .form-group {
-            text-align: left;
+        /* Error */
+        .error-msg {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(240, 71, 71, 0.1);
+            border: 1px solid rgba(240, 71, 71, 0.25);
+            color: #ff6b6b;
+            padding: 10px 14px;
+            border-radius: 10px;
             margin-bottom: 20px;
+            font-size: 13px;
         }
+        .error-msg::before { content: '⚠'; font-size: 14px; }
 
-        label {
+        /* Form */
+        .form-group { margin-bottom: 18px; }
+        .form-label {
             display: block;
+            font-size: 11px;
+            font-weight: 600;
+            letter-spacing: 0.1em;
             text-transform: uppercase;
-            font-size: 12px;
-            font-weight: bold;
-            color: #b9bbbe;
+            color: var(--muted);
             margin-bottom: 8px;
         }
-
-        input {
+        .input-wrap { position: relative; }
+        .input-icon {
+            position: absolute;
+            left: 14px; top: 50%;
+            transform: translateY(-50%);
+            font-size: 14px;
+            opacity: 0.4;
+            pointer-events: none;
+        }
+        input[type="text"],
+        input[type="password"] {
             width: 100%;
-            padding: 10px;
-            border-radius: 3px;
-            border: 1px solid #202225;
-            background-color: #202225;
-            color: white;
-            box-sizing: border-box;
+            padding: 12px 14px 12px 40px;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            color: var(--text);
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 14px;
             outline: none;
-            transition: border 0.2s;
+            transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
         }
-
         input:focus {
-            border-color: #7289da;
+            border-color: rgba(88, 101, 242, 0.6);
+            background: rgba(88, 101, 242, 0.07);
+            box-shadow: 0 0 0 3px rgba(88, 101, 242, 0.12);
         }
+        input::placeholder { color: var(--muted); }
 
-        button {
+        /* Submit button */
+        .btn-submit {
             width: 100%;
-            padding: 12px;
-            background-color: #5865f2;
+            padding: 14px;
+            background: var(--blurple);
             color: white;
             border: none;
-            border-radius: 3px;
-            font-size: 16px;
-            font-weight: 500;
-            cursor: pointer;
-            transition: background-color 0.2s, transform 0.1s;
-        }
-
-        button:hover {
-            background-color: #4752c4;
-        }
-
-        button:active {
-            transform: scale(0.98);
-        }
-
-        .error-msg {
-            background-color: #f04747;
-            color: white;
-            padding: 10px;
-            border-radius: 3px;
-            margin-bottom: 20px;
+            border-radius: 12px;
+            font-family: 'Space Mono', monospace;
             font-size: 14px;
+            font-weight: 700;
+            letter-spacing: 0.05em;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin-top: 8px;
+            position: relative;
+            overflow: hidden;
+        }
+        .btn-submit::before {
+            content: '';
+            position: absolute; inset: 0;
+            background: linear-gradient(rgba(255,255,255,0.1), transparent);
+            border-radius: inherit;
+        }
+        .btn-submit:hover {
+            background: #4752c4;
+            transform: translateY(-1px);
+            box-shadow: 0 8px 24px rgba(88, 101, 242, 0.4);
+        }
+        .btn-submit:active { transform: translateY(0); }
+
+        /* Footer note */
+        .footer-note {
+            font-size: 11px;
+            color: var(--muted);
+            text-align: center;
+            opacity: 0.5;
         }
     </style>
 </head>
 <body>
+    <div class="bg-orbs">
+        <div class="orb orb-1"></div>
+        <div class="orb orb-2"></div>
+        <div class="orb orb-3"></div>
+    </div>
 
-    <div class="login-card">
-        <div class="server-info">
-            <img id="stat-icon" class="stat-icon-img" src="" style="display: none;">
-            <span id="stat-name">Chargement...</span>
+    <div class="wrapper">
+        <div class="brand">
+            <div class="brand-dot"></div>
+            MRT-Bot Dashboard
+            <div class="brand-dot"></div>
         </div>
 
-        <h1>Content de vous revoir !</h1>
-        <p>Connectez-vous pour gérer votre bot.</p>
-
-        <% if (error) { %>
-            <div class="error-msg">
-                <%= error %>
-            </div>
-        <% } %>
-
-        <form action="/login" method="POST">
-            <div class="form-group">
-                <label>Nom d'utilisateur</label>
-                <input type="text" name="username" required>
-            </div>
-
-            <div class="form-group">
-                <label>Mot de passe</label>
-                <input type="password" name="password" required>
+        <div class="card">
+            <div class="server-info">
+                <img id="server-avatar" class="server-avatar" src="" style="display:none;" alt="">
+                <div id="server-avatar-placeholder" class="server-avatar-placeholder">MR</div>
+                <div class="server-meta">
+                    <div class="server-label">Serveur connecté</div>
+                    <div class="server-name" id="stat-name">Chargement...</div>
+                </div>
+                <div class="server-status">
+                    <div class="status-dot-green"></div>
+                    En ligne
+                </div>
             </div>
 
-            <button type="submit">Connexion</button>
-        </form>
+            <div class="card-title">Bon retour<br><span>parmi nous.</span></div>
+            <div class="card-sub">Connectez-vous pour accéder au panel de gestion.</div>
+
+            <% if (error) { %>
+                <div class="error-msg"><%= error %></div>
+            <% } %>
+
+            <form action="/login" method="POST">
+                <div class="form-group">
+                    <label class="form-label">Identifiant</label>
+                    <div class="input-wrap">
+                        <span class="input-icon">👤</span>
+                        <input type="text" name="username" placeholder="Votre nom d'utilisateur" required autocomplete="username">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Mot de passe</label>
+                    <div class="input-wrap">
+                        <span class="input-icon">🔒</span>
+                        <input type="password" name="password" placeholder="••••••••" required autocomplete="current-password">
+                    </div>
+                </div>
+                <button type="submit" class="btn-submit">Accéder au Dashboard →</button>
+            </form>
+        </div>
+
+        <div class="footer-note">Accès restreint — usage interne uniquement</div>
     </div>
 
     <script>
@@ -158,16 +345,15 @@
             try {
                 const res = await fetch('/api/stats');
                 const data = await res.json();
-                
-                document.getElementById('stat-name').innerText = data.serverName;
-                
-                const iconImg = document.getElementById('stat-icon');
-                if(data.icon) {
-                    iconImg.src = data.icon;
-                    iconImg.style.display = 'block';
+                document.getElementById('stat-name').innerText = data.serverName || 'Dashboard';
+                if (data.icon) {
+                    const img = document.getElementById('server-avatar');
+                    img.src = data.icon;
+                    img.style.display = 'block';
+                    document.getElementById('server-avatar-placeholder').style.display = 'none';
                 }
             } catch (e) {
-                document.getElementById('stat-name').innerText = "Dashboard";
+                document.getElementById('stat-name').innerText = 'Dashboard';
             }
         }
         loadServerInfo();
