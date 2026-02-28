@@ -72,13 +72,15 @@ function checkAuth(req, res, next) {
     res.redirect('/login');
 }
 
+// ─── LOGIN ────────────────────────────────────────────────────────────────────
+
 app.get('/login', (req, res) => {
     const guild = global.client?.guilds.cache.get(config.panelGuildId);
     const stats = {
         serverName: guild ? guild.name : "Serveur Discord",
         serverIcon: guild ? guild.iconURL({ extension: 'png', size: 512 }) : 'https://cdn.discordapp.com/embed/avatars/0.png'
     };
-    res.render('login', { error: null, stats: stats });
+    res.render('login', { error: null, stats });
 });
 
 app.post('/login', (req, res) => {
@@ -92,53 +94,73 @@ app.post('/login', (req, res) => {
     if (username === config.panelUser && password === config.panelPass) {
         req.session.loggedIn = true;
         addPanelLog(`Connexion de ${username}`);
-        res.redirect('/');
+        res.redirect('/select-server');
     } else {
-        res.render('login', { error: "Identifiants incorrects", stats: stats });
+        res.render('login', { error: "Identifiants incorrects", stats });
     }
 });
 
+// ─── SELECT SERVER ────────────────────────────────────────────────────────────
+
+app.get('/select-server', checkAuth, (req, res) => {
+    const guilds = global.client?.guilds.cache.map(g => ({
+        id: g.id,
+        name: g.name,
+        icon: g.iconURL({ dynamic: true, size: 128 }) || null
+    })) || [];
+    res.render('select-server', { guilds });
+});
+
+// ─── DASHBOARD ────────────────────────────────────────────────────────────────
+
 app.get('/', checkAuth, async (req, res) => {
+    // Redirige vers la sélection si aucun guild précisé dans l'URL
+    if (!req.query.guild) return res.redirect('/select-server');
+
     try {
         const allCommands = await getAllCommands();
-        
+
         const guilds = global.client?.guilds.cache.map(g => ({
             id: g.id,
             name: g.name,
             icon: g.iconURL({ dynamic: true, size: 128 }) || 'https://i.ytimg.com/vi/4VxEPhl03ww/maxresdefault.jpg'
         })) || [];
-        
-        const selectedGuildId = req.query.guild || (guilds.length > 0 ? guilds[0].id : "GLOBAL");
+
+        const guildId = req.query.guild;
 
         const stats = {
             ping: global.client?.ws.ping || 0,
-            serverName: global.client?.guilds.cache.get(selectedGuildId)?.name || "Global",
+            serverName: global.client?.guilds.cache.get(guildId)?.name || "Global",
             guilds: global.client?.guilds.cache.size || 0,
             users: global.client?.users.cache.size || 0,
             ram: (process.memoryUsage().heapUsed / 1024 / 1024).toFixed(2)
         };
 
-        db.all('SELECT * FROM modules WHERE guildId = ?', [selectedGuildId], (err, moduleRows) => {
-            db.all('SELECT * FROM commands_status WHERE guildId = ?', [selectedGuildId], (err2, cmdStatusRows) => {
-                res.render('index', { 
+        db.all('SELECT * FROM modules WHERE guildId = ?', [guildId], (err, moduleRows) => {
+            db.all('SELECT * FROM commands_status WHERE guildId = ?', [guildId], (err2, cmdStatusRows) => {
+                res.render('index', {
                     modules: moduleRows || [],
                     allCommands: allCommands || [],
-                    cmdStatus: cmdStatusRows || [],
-                    stats: stats,
-                    guilds: guilds,
-                    currentGuildId: selectedGuildId
+                    commandsStatus: cmdStatusRows || [],  // aligné avec index.ejs
+                    stats,
+                    guilds,
+                    guildId,                              // utilisé dans les forms toggle-command
+                    currentGuildId: guildId               // utilisé dans la sidebar pour la classe active
                 });
             });
         });
-    } catch (error) { 
+    } catch (error) {
         console.error(error);
-        res.status(500).send("Erreur de chargement du Dashboard."); 
+        res.status(500).send("Erreur de chargement du Dashboard.");
     }
 });
+
+// ─── API STATS ────────────────────────────────────────────────────────────────
 
 app.get('/api/stats', checkAuth, async (req, res) => {
     const guild = global.client?.guilds.cache.get(config.panelGuildId);
 
+    // Vérifie la clé Gemini toutes les 5 minutes max
     if (config.geminiKey && Date.now() - lastGeminiCheck > 300000) {
         try {
             const genAI = new GoogleGenerativeAI(config.geminiKey);
@@ -162,6 +184,8 @@ app.get('/api/stats', checkAuth, async (req, res) => {
     });
 });
 
+// ─── AI CHAT ─────────────────────────────────────────────────────────────────
+
 app.post('/api/ai-chat', checkAuth, async (req, res) => {
     const { message, code, fileName, history } = req.body;
     if (!config.geminiKey) return res.status(400).json({ error: "Clé manquante" });
@@ -170,12 +194,11 @@ app.post('/api/ai-chat', checkAuth, async (req, res) => {
         const genAI = new GoogleGenerativeAI(config.geminiKey);
         const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
         const context = history.map(h => `User: ${h.user}\nBot: ${h.bot}`).join("\n");
-        
+
         const prompt = `Tu es un expert en Discord.js.\nFichier actuel : ${fileName}\nCode actuel :\n${code}\n\nHistorique :\n${context}\n\nQuestion : ${message}\n\nRéponds brièvement. Si modif, utilise [CODE_START] et [CODE_END].`;
 
         const result = await model.generateContent(prompt);
-        const response = await result.response;
-        const text = response.text();
+        const text = result.response.text();
 
         let reply = text;
         let newCode = null;
@@ -192,39 +215,49 @@ app.post('/api/ai-chat', checkAuth, async (req, res) => {
     }
 });
 
+// ─── LOGS ─────────────────────────────────────────────────────────────────────
+
 app.get('/get-panel-logs', checkAuth, (req, res) => {
     res.json({ logs: logsMemoire });
 });
 
+// ─── SCRIPTS ─────────────────────────────────────────────────────────────────
+
 app.get('/get-script/:name', checkAuth, (req, res) => {
     const name = req.params.name;
-    let filePath = (name === "config.json") ? path.join(rootDir, 'config.json') : findFileRecursive(path.join(rootDir, 'Commands'), name + '.js');
-    
+    const filePath = (name === "config.json")
+        ? path.join(rootDir, 'config.json')
+        : findFileRecursive(path.join(rootDir, 'Commands'), name + '.js');
+
     if (filePath && fs.existsSync(filePath)) {
         res.json({ content: fs.readFileSync(filePath, 'utf8') });
-    } else { 
-        res.status(404).json({ error: "Fichier non trouvé" }); 
+    } else {
+        res.status(404).json({ error: "Fichier non trouvé" });
     }
 });
 
 app.post('/save-script', checkAuth, (req, res) => {
     const { fileName, content } = req.body;
-    let filePath = (fileName === "config.json") ? path.join(rootDir, 'config.json') : findFileRecursive(path.join(rootDir, 'Commands'), fileName + '.js');
+    const filePath = (fileName === "config.json")
+        ? path.join(rootDir, 'config.json')
+        : findFileRecursive(path.join(rootDir, 'Commands'), fileName + '.js');
 
     if (filePath) {
         fs.writeFileSync(filePath, content, 'utf8');
         addPanelLog(`Modification du fichier : ${fileName}`);
         res.json({ success: true });
-    } else { 
-        res.status(404).json({ error: "Localisation impossible" }); 
+    } else {
+        res.status(404).json({ error: "Localisation impossible" });
     }
 });
+
+// ─── SQL ──────────────────────────────────────────────────────────────────────
 
 app.post('/sql-query', checkAuth, (req, res) => {
     const { query } = req.body;
     const action = query.trim().split(' ')[0].toUpperCase();
     addPanelLog(`SQL : ${query.substring(0, 50)}`);
-    
+
     if (action === 'SELECT') {
         db.all(query, [], (err, rows) => {
             if (err) return res.status(500).json({ error: err.message });
@@ -250,24 +283,48 @@ app.get('/download-db', checkAuth, (req, res) => {
     if (fs.existsSync(dbPath)) {
         addPanelLog("Téléchargement de la base de données");
         res.download(dbPath);
-    } else { 
-        res.status(404).send("Base de données introuvable."); 
+    } else {
+        res.status(404).send("Base de données introuvable.");
     }
 });
+
+// ─── TOGGLES ──────────────────────────────────────────────────────────────────
 
 app.post('/toggle-module', checkAuth, (req, res) => {
     const { moduleName, currentState } = req.body;
     const newState = currentState === '1' ? 0 : 1;
-    addPanelLog(`Module [${moduleName}] -> ${newState === 1 ? 'ON' : 'OFF'}`);
-    db.run('INSERT OR REPLACE INTO modules (guildId, moduleName, enabled) VALUES (?, ?, ?)', ['GLOBAL', moduleName, newState], () => res.redirect('/'));
+
+    // Récupère le guildId depuis le referer pour rediriger au bon endroit
+    let guildId = 'GLOBAL';
+    try {
+        const referer = req.headers.referer || '';
+        const url = new URL(referer, `http://${req.headers.host}`);
+        guildId = url.searchParams.get('guild') || 'GLOBAL';
+    } catch(e) {}
+
+    addPanelLog(`Module [${moduleName}] -> ${newState === 1 ? 'ON' : 'OFF'} (${guildId})`);
+
+    db.run(
+        'INSERT OR REPLACE INTO modules (guildId, moduleName, enabled) VALUES (?, ?, ?)',
+        [guildId, moduleName, newState],
+        () => res.redirect(`/?guild=${guildId}`)
+    );
 });
 
 app.post('/toggle-command', checkAuth, (req, res) => {
-    const { commandName, currentState } = req.body;
+    const { commandName, currentState, guildId } = req.body;
     const newState = currentState === '1' ? 0 : 1;
-    addPanelLog(`Commande [${commandName}] -> ${newState === 1 ? 'ON' : 'OFF'}`);
-    db.run('INSERT OR REPLACE INTO commands_status (commandName, enabled) VALUES (?, ?)', [commandName, newState], () => res.redirect('/'));
+
+    addPanelLog(`Commande [${commandName}] -> ${newState === 1 ? 'ON' : 'OFF'} (${guildId})`);
+
+    db.run(
+        'INSERT OR REPLACE INTO commands_status (guildId, commandName, enabled) VALUES (?, ?, ?)',
+        [guildId, commandName, newState],
+        () => res.redirect(`/?guild=${guildId}`)
+    );
 });
+
+// ─── BIO PAGES ────────────────────────────────────────────────────────────────
 
 const bioPath = config.bioRoute || "b";
 app.get(`/${bioPath}/:slug`, async (req, res) => {
@@ -288,26 +345,18 @@ app.get(`/${bioPath}/:slug`, async (req, res) => {
             const guild = global.client.guilds.cache.get(config.panelGuildId);
             if (guild && row.userId) {
                 const member = await guild.members.fetch(row.userId);
-
                 presence = member.presence;
-                userAvatar = member.user.displayAvatarURL({
-                    extension: 'png',
-                    size: 512
-                });
+                userAvatar = member.user.displayAvatarURL({ extension: 'png', size: 512 });
             }
         } catch (e) {
             console.warn("Impossible de récupérer la présence :", e.message);
         }
 
-        res.render('bio', {
-            data: row,
-            socials,
-            config,
-            presence,
-            userAvatar
-        });
+        res.render('bio', { data: row, socials, config, presence, userAvatar });
     });
 });
+
+// ─── START ────────────────────────────────────────────────────────────────────
 
 export function startDashboard() {
     let port = process.env.PORT || 3000;
@@ -316,8 +365,10 @@ export function startDashboard() {
             const url = new URL(config.panelURL);
             port = url.port || (url.protocol === 'https:' ? 443 : 80);
         }
-    } catch(e) { 
-        port = process.env.PORT || 3000; 
+    } catch(e) {
+        port = process.env.PORT || 3000;
     }
-    app.listen(port, '0.0.0.0', () => { console.log(`[DASHBOARD] Prêt sur le port ${port}`); });
+    app.listen(port, '0.0.0.0', () => {
+        console.log(`[DASHBOARD] Prêt sur le port ${port}`);
+    });
 }
