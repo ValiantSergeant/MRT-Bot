@@ -86,13 +86,26 @@ app.post('/login', (req, res) => {
 
     if (username === config.panelUser && password === config.panelPass) {
         req.session.loggedIn = true;
-        res.redirect('/');
+        res.redirect('/select-server');
     } else {
         res.render('login', { error: "Identifiants incorrects", stats: stats });
     }
 });
 
+app.get('/select-server', checkAuth, (req, res) => {
+    const guilds = global.client?.guilds.cache.map(g => ({
+        id: g.id,
+        name: g.name,
+        icon: g.iconURL({ dynamic: true, size: 128 }) || null
+    })) || [];
+    res.render('select-server', { guilds });
+});
+
 app.get('/', checkAuth, async (req, res) => {
+    if (!req.query.guild) {
+        return res.redirect('/select-server');
+    }
+
     try {
         const allCommands = await getAllCommands();
         
@@ -102,7 +115,8 @@ app.get('/', checkAuth, async (req, res) => {
             icon: g.iconURL({ dynamic: true, size: 128 }) || 'https://i.ytimg.com/vi/4VxEPhl03ww/maxresdefault.jpg'
         })) || [];
         
-        const selectedGuildId = req.query.guild || (guilds.length > 0 ? guilds[0].id : "GLOBAL");
+        const selectedGuildId = req.query.guild;
+        const guildId = selectedGuildId;
 
         const stats = {
             ping: global.client?.ws.ping || 0,
@@ -112,21 +126,25 @@ app.get('/', checkAuth, async (req, res) => {
             ram: (process.memoryUsage().heapUsed / 1024 / 1024).toFixed(2)
         };
 
-        db.all('SELECT * FROM modules WHERE guildId = ?', [selectedGuildId], (err, moduleRows) => {
-            db.all('SELECT * FROM commands_status WHERE guildId = ?', [selectedGuildId], (err2, cmdStatusRows) => {
-                res.render('index', { 
-                    modules: moduleRows || [],
-                    allCommands: allCommands || [],
-                    cmdStatus: cmdStatusRows || [],
-                    stats: stats,
-                    guilds: guilds,
-                    currentGuildId: selectedGuildId
+        
+        db.all('SELECT * FROM modules WHERE guildId = ?', [guildId], (err, modules) => {
+            db.all('SELECT * FROM commands_status WHERE guildId = ?', [guildId], (err, commandsStatus) => {
+                res.render('index', {
+                    user: req.session.user,
+                    guildId,
+                    guilds,              
+                    currentGuildId: guildId, 
+                    stats,               
+                    modules: modules || [],                
+                    commandsStatus: commandsStatus || [],
+                    allCommands,
+                    config
                 });
             });
         });
-    } catch (error) { 
-        console.error(error);
-        res.status(500).send("Erreur de chargement du Dashboard."); 
+    } catch (e) {
+        console.error("[DASHBOARD] Erreur route /:", e);
+        res.status(500).send("Erreur interne du dashboard.");
     }
 });
 
@@ -247,15 +265,37 @@ app.get('/download-db', checkAuth, (req, res) => {
 app.post('/toggle-module', checkAuth, (req, res) => {
     const { moduleName, currentState } = req.body;
     const newState = currentState === '1' ? 0 : 1;
-    addPanelLog(`Module [${moduleName}] -> ${newState === 1 ? 'ON' : 'OFF'}`);
-    db.run('INSERT OR REPLACE INTO modules (guildId, moduleName, enabled) VALUES (?, ?, ?)', ['GLOBAL', moduleName, newState], () => res.redirect('/'));
+    
+    const referer = req.headers.referer || '';
+    const url = new URL(referer, `http://${req.headers.host}`);
+    const guildId = url.searchParams.get('guild') || 'GLOBAL';
+
+    addPanelLog(`Module [${moduleName}] -> ${newState === 1 ? 'ON' : 'OFF'} (${guildId})`);
+
+    db.run(
+        `REPLACE INTO modules (guildId, moduleName, enabled) VALUES (?, ?, ?)`,
+        [guildId, moduleName, newState],
+        (err) => {
+            if (err) console.error(err);
+            res.redirect(referer || '/');
+        }
+    );
 });
 
 app.post('/toggle-command', checkAuth, (req, res) => {
-    const { commandName, currentState } = req.body;
+    const { commandName, currentState, guildId } = req.body;
     const newState = currentState === '1' ? 0 : 1;
-    addPanelLog(`Commande [${commandName}] -> ${newState === 1 ? 'ON' : 'OFF'}`);
-    db.run('INSERT OR REPLACE INTO commands_status (commandName, enabled) VALUES (?, ?)', [commandName, newState], () => res.redirect('/'));
+
+    addPanelLog(`Commande [${commandName}] -> ${newState === 1 ? 'ON' : 'OFF'} (${guildId})`);
+
+    db.run(
+        `REPLACE INTO commands_status (guildId, commandName, enabled) VALUES (?, ?, ?)`,
+        [guildId, commandName, newState],
+        (err) => {
+            if (err) console.error(err);
+            res.redirect(`/?guild=${guildId}`);
+        }
+    );
 });
 
 const bioPath = config.bioRoute || "b";
