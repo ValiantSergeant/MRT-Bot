@@ -1,177 +1,421 @@
 <!DOCTYPE html>
 <html lang="fr">
-
 <head>
     <meta charset="UTF-8">
     <title>MRT-Bot | Dashboard</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
         :root {
             --blurple: #5865F2;
-            --success: #43b581;
-            --danger: #f04747;
+            --blurple-dim: rgba(88,101,242,0.15);
+            --blurple-glow: rgba(88,101,242,0.3);
+            --success: #3ba55d;
+            --success-dim: rgba(59,165,93,0.15);
+            --danger: #ed4245;
+            --danger-dim: rgba(237,66,69,0.15);
             --warning: #faa61a;
-            --bg-main: #36393f;
-            --bg-card: #2f3136;
-            --bg-header: #202225;
-            --text-primary: #ffffff;
-            --text-muted: #b9bbbe;
-            --border-color: #202225;
-            --input-bg: #202225;
-            --vscode-bg: #1e1e1e;
+            --warning-dim: rgba(250,166,26,0.12);
+            --bg: #08090d;
+            --bg-2: #0e0f15;
+            --surface: rgba(255,255,255,0.035);
+            --surface-hover: rgba(255,255,255,0.06);
+            --border: rgba(255,255,255,0.07);
+            --border-strong: rgba(255,255,255,0.12);
+            --text: #e8e9f0;
+            --text-dim: rgba(232,233,240,0.5);
+            --text-muted: rgba(232,233,240,0.3);
         }
 
-        [data-theme="light"] {
-            --bg-main: #ebedef;
-            --bg-card: #ffffff;
-            --bg-header: #f2f3f5;
-            --text-primary: #060607;
-            --text-muted: #4f5660;
-            --border-color: #e3e5e8;
-            --input-bg: #e3e5e8;
-            --vscode-bg: #f3f3f3;
+        body {
+            font-family: 'Space Grotesk', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            height: 100vh; width: 100vw;
+            overflow: hidden;
+            display: flex;
         }
 
-        @keyframes blink-red {
-            0% { opacity: 1; }
-            50% { opacity: 0.5; }
-            100% { opacity: 1; }
+        /* ─── SIDEBAR ─── */
+        .sidebar {
+            width: 68px; height: 100vh;
+            background: var(--bg-2);
+            border-right: 1px solid var(--border);
+            display: flex; flex-direction: column;
+            align-items: center;
+            padding: 16px 0;
+            gap: 6px;
+            flex-shrink: 0;
+            transition: width 0.35s cubic-bezier(0.4,0,0.2,1);
+            overflow: hidden;
+            position: relative; z-index: 10;
         }
+        .sidebar.expanded { width: 220px; align-items: flex-start; padding: 16px 12px; }
 
-        .alert-blink {
-            animation: blink-red 1.5s infinite;
+        .sidebar-logo {
+            width: 40px; height: 40px;
+            background: linear-gradient(135deg, var(--blurple), #7c5ef5);
+            border-radius: 12px;
+            display: flex; align-items: center; justify-content: center;
+            font-family: 'Space Mono', monospace; font-weight: 800; font-size: 16px; color: white;
+            flex-shrink: 0;
+            box-shadow: 0 4px 16px var(--blurple-glow);
+            margin-bottom: 8px;
         }
+        .sidebar.expanded .sidebar-logo { margin-left: 4px; }
 
-        body { font-family: sans-serif; background: var(--bg-main); color: var(--text-primary); margin: 0; padding: 0; overflow: hidden; height: 100vh; width: 100vw; }
-        .container { max-width: 1200px; margin: auto; }
-        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; background: var(--bg-header); padding: 20px; border-radius: 8px; }
-        .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin-bottom: 30px; }
-        .stat-card { background: var(--bg-card); padding: 15px; border-radius: 8px; border-top: 3px solid var(--blurple); text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center; }
-        .stat-card span { display: block; color: var(--text-muted); font-size: 12px; text-transform: uppercase; margin-bottom: 5px; }
-        .stat-card strong { font-size: 18px; color: var(--text-primary); }
-        .stat-icon-img { width: 35px; height: 35px; border-radius: 50%; margin-bottom: 8px; background: #202225; object-fit: cover; }
-        .btn-action { border: none; color: white; padding: 8px 14px; border-radius: 4px; cursor: pointer; font-weight: bold; display: flex; align-items: center; gap: 6px; font-size: 12px; }
-        .system-bar { background: var(--bg-card); padding: 15px; border-radius: 8px; display: flex; gap: 15px; align-items: center; margin-bottom: 30px; border-left: 4px solid var(--warning); }
-        .module-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 15px; margin-bottom: 30px; }
-        .card { background: var(--bg-card); padding: 20px; border-radius: 8px; border-bottom: 3px solid var(--blurple); }
-        .btn-toggle { border: none; padding: 10px; border-radius: 4px; cursor: pointer; color: white; font-weight: bold; width: 100%; margin-top: 15px; }
-        #searchInput { width: 100%; padding: 12px; margin: 20px 0; border-radius: 4px; border: 1px solid var(--border-color); background: var(--input-bg); color: var(--text-primary); outline: none; box-sizing: border-box; }
-        table { width: 100%; border-collapse: separate; border-spacing: 0 5px; }
-        tr { background: var(--bg-card); }
-        td { padding: 12px 15px; vertical-align: middle; }
-        .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.8); }
-        .modal-content { background: var(--vscode-bg); margin: 2% auto; width: 90%; max-width: 1100px; border-radius: 8px; overflow: hidden; border: 1px solid #444; }
-        .vscode-header { background: #323233; color: #ccc; padding: 10px; font-size: 12px; display: flex; justify-content: space-between; align-items: center; }
-        .vscode-editor { width: 100%; height: 500px; background: #1e1e1e; color: #d4d4d4; border: none; padding: 20px; font-family: 'Consolas', monospace; font-size: 14px; outline: none; box-sizing: border-box; resize: none; }
-        .console-box { background: #1a1a1a; color: #5865F2; font-family: 'Consolas', monospace; padding: 15px; border-radius: 8px; height: 180px; overflow-y: auto; font-size: 12px; margin-top: 30px; border: 1px solid #333; }
-        .pma-table { width: 100%; border-collapse: collapse; background: #1a1a1a; }
-        .pma-table th { background: #2d2d2d; color: #fff; text-align: left; padding: 10px; border: 1px solid #444; }
-        .pma-table td { padding: 10px; border: 1px solid #444; color: #ccc; font-size: 13px; }
-        .action-icon { cursor: pointer; font-size: 14px; background: none; border: none; padding: 4px; transition: 0.2s; }
-        .action-icon:hover { transform: scale(1.2); }
-        .edit-field { margin-bottom: 15px; }
-        .edit-field label { display: block; color: #aaa; font-size: 12px; margin-bottom: 5px; }
-        .edit-field input { width: 100%; padding: 8px; background: #1e1e1e; border: 1px solid #444; color: white; box-sizing: border-box; }
-        .help-box { background: #2d2d2d; padding: 10px; border-radius: 4px; margin-top: 10px; border-left: 3px solid var(--blurple); font-size: 12px; color: #ccc; }
-        
-        .ai-sidebar { width: 320px; background: #252526; border-left: 1px solid #444; display: flex; flex-direction: column; overflow: hidden; }
-        .ai-chat-container { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
-        .ai-messages { flex: 1; overflow-y: auto; padding: 10px; display: flex; flex-direction: column; gap: 10px; background: #1e1e1e; }
-        .msg { font-size: 12px; padding: 8px 12px; border-radius: 6px; max-width: 85%; line-height: 1.4; word-wrap: break-word; }
+        .sidebar-divider {
+            width: 32px; height: 1px;
+            background: var(--border); margin: 4px 0; flex-shrink: 0;
+            transition: width 0.3s;
+        }
+        .sidebar.expanded .sidebar-divider { width: 100%; }
+
+        .guild-item {
+            width: 44px; height: 44px; border-radius: 50%;
+            cursor: pointer;
+            transition: all 0.25s cubic-bezier(0.34,1.56,0.64,1);
+            position: relative;
+            display: flex; align-items: center; justify-content: center;
+            flex-shrink: 0;
+            background: var(--surface);
+            overflow: hidden;
+            border: 1px solid transparent;
+        }
+        .sidebar.expanded .guild-item {
+            width: 100%; border-radius: 10px; height: 42px;
+            justify-content: flex-start; padding: 0 10px; gap: 10px;
+        }
+        .guild-item img { width: 100%; height: 100%; object-fit: cover; border-radius: inherit; }
+        .sidebar.expanded .guild-item img { width: 28px; height: 28px; border-radius: 8px; flex-shrink: 0; }
+        .guild-item:hover { background: var(--surface-hover); border-color: var(--border-strong); transform: scale(1.05); }
+        .sidebar.expanded .guild-item:hover { transform: none; }
+        .guild-item.active { border-color: var(--blurple); background: var(--blurple-dim); border-radius: 14px; }
+        .sidebar.expanded .guild-item.active { border-radius: 10px; }
+        .guild-item.active::before {
+            content: ''; position: absolute; left: -12px; top: 50%; transform: translateY(-50%);
+            width: 4px; height: 20px; background: var(--blurple); border-radius: 0 3px 3px 0;
+        }
+        .sidebar.expanded .guild-item.active::before { display: none; }
+        .guild-item-name { display: none; font-size: 13px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--text); }
+        .sidebar.expanded .guild-item-name { display: block; }
+        .guild-placeholder { font-family: 'Space Mono', monospace; font-weight: 800; font-size: 13px; color: var(--text-dim); }
+
+        .sidebar-toggle {
+            margin-top: auto;
+            width: 40px; height: 40px; border-radius: 10px;
+            background: var(--surface); border: 1px solid var(--border);
+            color: var(--text-dim); cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 15px; flex-shrink: 0; transition: all 0.2s;
+        }
+        .sidebar.expanded .sidebar-toggle { width: 100%; justify-content: flex-end; padding-right: 10px; }
+        .sidebar-toggle:hover { background: var(--surface-hover); color: var(--text); }
+
+        /* ─── MAIN ─── */
+        .main { flex: 1; height: 100vh; overflow-y: auto; overflow-x: hidden; background: var(--bg); display: flex; flex-direction: column; }
+        .main::-webkit-scrollbar { width: 4px; }
+        .main::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 2px; }
+
+        /* ─── TOPBAR ─── */
+        .topbar {
+            position: sticky; top: 0; z-index: 5;
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 0 28px; height: 60px;
+            background: rgba(8,9,13,0.85);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--border);
+            flex-shrink: 0;
+        }
+        .topbar-left { display: flex; align-items: center; gap: 14px; }
+        .topbar-title { font-family: 'Space Mono', monospace; font-size: 15px; font-weight: 700; }
+        .topbar-guild-badge {
+            display: flex; align-items: center; gap: 7px;
+            background: var(--blurple-dim); border: 1px solid rgba(88,101,242,0.2);
+            border-radius: 8px; padding: 4px 10px 4px 7px;
+            font-size: 12px; font-weight: 500; color: #a5abff;
+        }
+        .topbar-right { display: flex; align-items: center; gap: 8px; }
+        .topbar-btn {
+            height: 32px; padding: 0 12px;
+            background: var(--surface); border: 1px solid var(--border);
+            border-radius: 8px; color: var(--text-dim);
+            font-family: 'Space Grotesk', sans-serif; font-size: 12px; font-weight: 500;
+            cursor: pointer; display: flex; align-items: center; gap: 5px;
+            transition: all 0.15s; text-decoration: none;
+        }
+        .topbar-btn:hover { background: var(--surface-hover); color: var(--text); border-color: var(--border-strong); }
+        .topbar-btn.primary { background: var(--blurple-dim); border-color: rgba(88,101,242,0.3); color: #a5abff; }
+        .topbar-btn.primary:hover { background: rgba(88,101,242,0.25); }
+
+        /* ─── CONTENT ─── */
+        .content { padding: 28px; flex: 1; }
+
+        /* ─── STATS ─── */
+        .stats-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 14px; margin-bottom: 28px; }
+        .stat-card {
+            background: var(--surface); border: 1px solid var(--border);
+            border-radius: 16px; padding: 18px 20px;
+            display: flex; align-items: center; gap: 14px;
+            transition: border-color 0.2s, background 0.2s;
+            position: relative; overflow: hidden;
+        }
+        .stat-card::before {
+            content: ''; position: absolute; inset: 0;
+            background: linear-gradient(135deg, rgba(88,101,242,0.04), transparent 60%);
+            pointer-events: none;
+        }
+        .stat-card:hover { border-color: var(--border-strong); background: var(--surface-hover); }
+        .stat-icon { width: 40px; height: 40px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0; }
+        .stat-icon.blue { background: var(--blurple-dim); }
+        .stat-icon.green { background: var(--success-dim); }
+        .stat-icon.orange { background: var(--warning-dim); }
+        .stat-label { font-size: 10px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-muted); margin-bottom: 3px; }
+        .stat-value { font-family: 'Space Mono', monospace; font-size: 20px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+        /* ─── SECTION TITLE ─── */
+        .section-title {
+            font-family: 'Space Mono', monospace; font-size: 12px; font-weight: 700;
+            letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-muted);
+            display: flex; align-items: center; gap: 8px; margin-bottom: 14px;
+        }
+        .section-title::before { content: ''; display: inline-block; width: 3px; height: 13px; background: var(--blurple); border-radius: 2px; }
+
+        /* ─── MODULES ─── */
+        .module-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(175px,1fr)); gap: 10px; margin-bottom: 28px; }
+        .module-card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 15px; transition: all 0.2s; }
+        .module-card:hover { border-color: var(--border-strong); background: var(--surface-hover); }
+        .module-card-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 11px; }
+        .module-name { font-family: 'Space Mono', monospace; font-size: 13px; font-weight: 700; }
+        .module-badge { font-size: 9px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; padding: 3px 7px; border-radius: 6px; }
+        .module-badge.on { background: var(--success-dim); color: #5dbb7c; }
+        .module-badge.off { background: var(--danger-dim); color: #f07070; }
+        .toggle-btn {
+            width: 100%; padding: 8px; border-radius: 9px;
+            border: 1px solid var(--border); background: var(--surface);
+            color: var(--text-dim); font-family: 'Space Grotesk', sans-serif;
+            font-size: 12px; font-weight: 500; cursor: pointer;
+            transition: all 0.15s; display: flex; align-items: center; justify-content: center; gap: 5px;
+        }
+        .toggle-btn.on:hover { background: var(--danger-dim); border-color: rgba(237,66,69,0.3); color: #f07070; }
+        .toggle-btn.off:hover { background: var(--success-dim); border-color: rgba(59,165,93,0.3); color: #5dbb7c; }
+
+        /* ─── SEARCH ─── */
+        .search-wrap { position: relative; margin-bottom: 12px; }
+        .search-icon { position: absolute; left: 13px; top: 50%; transform: translateY(-50%); font-size: 13px; opacity: 0.3; pointer-events: none; }
+        #searchInput {
+            width: 100%; padding: 10px 13px 10px 38px;
+            background: var(--surface); border: 1px solid var(--border);
+            border-radius: 11px; color: var(--text);
+            font-family: 'Space Grotesk', sans-serif; font-size: 13px; outline: none; transition: all 0.15s;
+        }
+        #searchInput:focus { border-color: rgba(88,101,242,0.4); background: var(--blurple-dim); box-shadow: 0 0 0 3px rgba(88,101,242,0.08); }
+        #searchInput::placeholder { color: var(--text-muted); }
+
+        /* ─── CMD TABLE ─── */
+        .cmd-table { width: 100%; border-collapse: separate; border-spacing: 0 4px; }
+        .cmd-row { background: var(--surface); transition: all 0.15s; }
+        .cmd-row td { padding: 10px 13px; vertical-align: middle; }
+        .cmd-row td:first-child { border-radius: 10px 0 0 10px; }
+        .cmd-row td:last-child { border-radius: 0 10px 10px 0; }
+        .cmd-row:hover td { background: var(--surface-hover); }
+        .cmd-name { font-family: 'Space Mono', monospace; font-size: 13px; font-weight: 700; color: var(--warning); }
+        .cmd-cat { display: inline-block; background: var(--blurple-dim); color: #a5abff; padding: 2px 8px; border-radius: 6px; font-size: 11px; font-weight: 500; }
+        .disabled-row { opacity: 0.4; }
+
+        /* ─── BTNS ─── */
+        .btn { border: none; padding: 6px 11px; border-radius: 8px; cursor: pointer; font-family: 'Space Grotesk', sans-serif; font-size: 12px; font-weight: 500; display: inline-flex; align-items: center; gap: 4px; transition: all 0.15s; white-space: nowrap; }
+        .btn-gray { background: rgba(255,255,255,0.07); color: var(--text-dim); border: 1px solid var(--border); }
+        .btn-gray:hover { background: rgba(255,255,255,0.12); color: var(--text); }
+        .btn-danger { background: var(--danger-dim); color: #f07070; border: 1px solid rgba(237,66,69,0.2); }
+        .btn-danger:hover { background: rgba(237,66,69,0.25); }
+        .btn-success { background: var(--success-dim); color: #5dbb7c; border: 1px solid rgba(59,165,93,0.2); }
+        .btn-success:hover { background: rgba(59,165,93,0.25); }
+        .btn-blurple { background: var(--blurple-dim); color: #a5abff; border: 1px solid rgba(88,101,242,0.3); }
+        .btn-blurple:hover { background: rgba(88,101,242,0.25); }
+        .btn-disabled { background: rgba(255,255,255,0.03); color: var(--text-muted); cursor: not-allowed; border: 1px solid var(--border); }
+
+        /* ─── CONSOLE ─── */
+        .console-box {
+            background: rgba(0,0,0,0.4); border: 1px solid var(--border);
+            border-radius: 13px; padding: 14px; height: 155px;
+            overflow-y: auto; font-family: 'Menlo','Consolas',monospace;
+            font-size: 11px; line-height: 1.7; color: #6e7ffa; margin-top: 28px;
+        }
+        .console-box::-webkit-scrollbar { width: 3px; }
+        .console-box::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 2px; }
+
+        /* ─── MODALS ─── */
+        .modal { display: none; position: fixed; z-index: 1000; inset: 0; background: rgba(0,0,0,0.75); backdrop-filter: blur(4px); align-items: center; justify-content: center; }
+        .modal.open { display: flex; }
+        .modal-box { background: #0e0f15; border: 1px solid var(--border-strong); border-radius: 18px; overflow: hidden; width: 90%; max-width: 1100px; box-shadow: 0 32px 80px rgba(0,0,0,0.7); animation: modalIn 0.25s cubic-bezier(0.34,1.56,0.64,1); }
+        @keyframes modalIn { from { opacity:0; transform:scale(0.95) translateY(8px); } to { opacity:1; transform:scale(1) translateY(0); } }
+        .modal-header { background: #0a0b0f; border-bottom: 1px solid var(--border); padding: 12px 18px; display: flex; align-items: center; justify-content: space-between; }
+        .modal-title { font-family: 'Space Mono', monospace; font-size: 13px; font-weight: 700; color: var(--text-dim); }
+        .modal-close { width: 28px; height: 28px; border-radius: 8px; background: var(--surface); border: 1px solid var(--border); color: var(--text-muted); cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 13px; transition: all 0.15s; }
+        .modal-close:hover { background: var(--danger-dim); color: var(--danger); }
+        .modal-footer { padding: 12px 18px; background: #0a0b0f; border-top: 1px solid var(--border); display: flex; justify-content: flex-end; gap: 8px; }
+
+        /* Editor */
+        .editor-layout { display: flex; height: 580px; }
+        .code-editor { flex: 1; background: #0d0e12; color: #abb2bf; border: none; padding: 20px; font-family: 'Menlo','Consolas',monospace; font-size: 13px; outline: none; resize: none; line-height: 1.6; }
+        .ai-panel { width: 295px; background: #0a0b0f; border-left: 1px solid var(--border); display: flex; flex-direction: column; }
+        .ai-panel-header { padding: 12px 14px; border-bottom: 1px solid var(--border); font-size: 10px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-muted); }
+        .ai-msgs { flex: 1; overflow-y: auto; padding: 12px; display: flex; flex-direction: column; gap: 8px; background: #0d0e12; }
+        .ai-msgs::-webkit-scrollbar { width: 2px; }
+        .msg { font-size: 12px; padding: 8px 11px; border-radius: 10px; max-width: 90%; line-height: 1.5; word-wrap: break-word; }
         .msg.user { align-self: flex-end; background: var(--blurple); color: white; }
-        .msg.bot { align-self: flex-start; background: #333; color: #ddd; border: 1px solid #444; }
-        .ai-footer { padding: 10px; background: #2d2d2d; border-top: 1px solid #444; }
-        .ai-input { width: 100%; background: #3c3c3c; border: 1px solid #555; color: white; padding: 8px; border-radius: 4px; resize: none; font-size: 12px; box-sizing: border-box; outline: none; }
+        .msg.bot { align-self: flex-start; background: rgba(255,255,255,0.05); color: var(--text-dim); border: 1px solid var(--border); }
+        .ai-input-area { padding: 10px; border-top: 1px solid var(--border); }
+        #aiPrompt { width: 100%; padding: 8px 10px; background: rgba(255,255,255,0.04); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-family: 'Space Grotesk', sans-serif; font-size: 12px; resize: none; outline: none; }
+        #aiPrompt:focus { border-color: rgba(88,101,242,0.4); }
 
-        .main-wrapper { display: flex; height: 100vh; width: 100%; overflow: hidden; }
-        .sidebar-guilds { width: 72px; background: #1e1f22; display: flex; flex-direction: column; align-items: center; padding-top: 12px; gap: 8px; overflow-y: auto; overflow-x: hidden; flex-shrink: 0; transition: width 0.3s ease, padding 0.3s ease; }
-        .sidebar-guilds.collapsed { width: 0; padding-left: 0; padding-right: 0; overflow: hidden; }
-        .guild-item { width: 48px; height: 48px; border-radius: 50%; cursor: pointer; transition: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55); position: relative; display: flex; align-items: center; justify-content: center; flex-shrink: 0; overflow: hidden; background: #313338; }
-        .guild-item img { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; transition: border-radius 0.3s ease, transform 0.2s ease; }
-        .guild-item:hover { transform: translateY(-4px); box-shadow: 0 4px 15px rgba(88, 101, 242, 0.5); }
-        .guild-item:hover img, .guild-item.active img { border-radius: 15px; }
-        .guild-item:active { transform: translateY(1px) scale(0.85); }
-        .guild-item.active { border-radius: 15px; box-shadow: 0 4px 15px rgba(88, 101, 242, 0.3); }
-        .guild-item.active::before { content: ""; position: absolute; left: 0; width: 4px; height: 32px; background: white; border-radius: 0 4px 4px 0; margin-left: -12px; transition: all 0.3s ease; }
-        .content-area { flex: 1; overflow-y: auto; overflow-x: hidden; padding: 20px; background: #313338; height: 100vh; box-sizing: border-box; }
-        .toggle-sidebar-btn { position: fixed; bottom: 20px; left: 16px; z-index: 1000; background: var(--blurple); border: none; color: white; width: 45px; height: 45px; border-radius: 12px; cursor: pointer; box-shadow: 0 4px 15px rgba(75, 109, 202, 0.4); display: flex; align-items: center; justify-content: center; font-size: 20px; transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
-        .toggle-sidebar-btn:hover { transform: scale(1.1); background: #4752c4; }
-        .toggle-sidebar-btn.is-closed { transform: rotate(180deg); background: #4752c4; left: 16px; border: 1px solid var(--blurple); }
-        .toggle-sidebar-btn.is-closed:hover { transform: scale(1.1) rotate(180deg); }
-</style>
+        /* SQL */
+        .sql-layout { display: flex; flex: 1; overflow: hidden; height: calc(85vh - 48px); }
+        .sql-sidebar { width: 195px; background: #0a0b0f; border-right: 1px solid var(--border); overflow-y: auto; padding: 10px; display: flex; flex-direction: column; gap: 4px; }
+        .sql-table-row { display: flex; align-items: center; justify-content: space-between; border-radius: 8px; overflow: hidden; }
+        .sql-table-btn { flex: 1; background: none; border: none; border-radius: 8px; cursor: pointer; color: var(--text-dim); font-size: 12px; font-weight: 500; padding: 8px 10px; text-align: left; transition: all 0.15s; }
+        .sql-table-btn:hover { background: var(--surface); color: var(--text); }
+        .sql-main { flex: 1; display: flex; flex-direction: column; background: #0d0e12; padding: 16px; overflow: hidden; gap: 10px; }
+        .sql-query-bar { display: flex; gap: 8px; align-items: center; }
+        #quickSqlQuery { flex: 1; padding: 9px 12px; background: rgba(255,255,255,0.04); border: 1px solid var(--border); border-radius: 9px; color: #4ec9b0; font-family: 'Menlo',monospace; font-size: 12px; outline: none; }
+        #quickSqlQuery:focus { border-color: rgba(88,101,242,0.4); }
+        #sqlResult { flex: 1; overflow: auto; }
+        .pma-table { width: 100%; border-collapse: collapse; }
+        .pma-table th { background: rgba(255,255,255,0.04); color: var(--text-dim); text-align: left; padding: 9px 12px; font-size: 10px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; border-bottom: 1px solid var(--border); }
+        .pma-table td { padding: 9px 12px; font-size: 12px; color: var(--text-dim); border-bottom: 1px solid rgba(255,255,255,0.03); }
+        .pma-table tr:hover td { background: var(--surface); }
+
+        /* Small modals */
+        .modal-sm { max-width: 430px; }
+        .edit-field { margin-bottom: 13px; }
+        .edit-label { display: block; font-size: 10px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-muted); margin-bottom: 5px; }
+        .edit-input { width: 100%; padding: 9px 12px; background: rgba(255,255,255,0.04); border: 1px solid var(--border); border-radius: 9px; color: var(--text); font-family: 'Space Grotesk', sans-serif; font-size: 13px; outline: none; }
+        .edit-input:focus { border-color: rgba(88,101,242,0.4); }
+        .help-box { background: var(--blurple-dim); border: 1px solid rgba(88,101,242,0.15); border-radius: 10px; padding: 12px 14px; margin-top: 10px; font-size: 12px; color: var(--text-dim); line-height: 1.7; }
+
+        @keyframes blink { 0%,100% { opacity:1; } 50% { opacity:0.5; } }
+        .alert-blink { animation: blink 1.5s infinite; }
+    </style>
 </head>
-
 <body>
 
-    <div class="main-wrapper">
-        <button class="toggle-sidebar-btn" onclick="toggleSidebar()">☰</button>
-
-        <div class="sidebar-guilds" id="guildSidebar">
+<!-- SIDEBAR -->
+<div class="sidebar" id="sidebar">
+    <div class="sidebar-logo">M</div>
+    <div class="sidebar-divider"></div>
     <% guilds.forEach(guild => { %>
-        <div class="guild-item <%= (locals.currentGuildId && guild.id === currentGuildId) ? 'active' : '' %>" 
-             onclick="window.location.href='/?guild=<%= guild.id %>'" 
+        <div class="guild-item <%= guild.id === currentGuildId ? 'active' : '' %>"
+             onclick="window.location.href='/?guild=<%= guild.id %>'"
              title="<%= guild.name %>">
-            <% if (guild.icon && guild.icon.includes('http')) { %>
+            <% if (guild.icon) { %>
                 <img src="<%= guild.icon %>" alt="<%= guild.name %>">
             <% } else { %>
-                <div class="guild-placeholder"><%= guild.name.substring(0, 2).toUpperCase() %></div>
+                <div class="guild-placeholder"><%= guild.name.substring(0,2).toUpperCase() %></div>
             <% } %>
+            <span class="guild-item-name"><%= guild.name %></span>
         </div>
     <% }); %>
+    <button class="sidebar-toggle" id="sidebarToggleBtn" onclick="toggleSidebar()">⇤</button>
 </div>
 
-        <div class="content-area">
-            <div class="container">
+<!-- MAIN -->
+<div class="main">
 
+    <!-- Topbar -->
+    <div class="topbar">
+        <div class="topbar-left">
+            <div class="topbar-title">Dashboard</div>
+            <div class="topbar-guild-badge">⚡ <%= stats.serverName %></div>
+        </div>
+        <div class="topbar-right">
+            <span id="aiStatus"></span>
+            <button class="topbar-btn primary" onclick="openEditor('config.json', true)">🛠 Config</button>
+            <button class="topbar-btn" onclick="openSqlBrowser()">📂 SQLite</button>
+            <a href="/download-db" class="topbar-btn">💾 Backup</a>
+            <button class="topbar-btn" onclick="toggleTheme()">🌓</button>
+        </div>
+    </div>
+
+    <div class="content">
+
+        <!-- Stats -->
         <div class="stats-grid">
-            <div class="stat-card"><span>📡 Latence</span><strong id="stat-ping"><%= stats.ping %>ms</strong></div>
-            <div class="stat-card"><img id="stat-icon" class="stat-icon-img" src="" style="display: none;"><span>🌐 Serveur</span><strong id="stat-name"><%= stats.serverName %></strong></div>
-            <div class="stat-card"><span>👥 Membres</span><strong id="stat-users"><%= stats.users %></strong></div>
-            <div class="stat-card"><span>💾 RAM</span><strong id="stat-ram"><%= stats.ram %> MB</strong></div>
+            <div class="stat-card">
+                <div class="stat-icon blue">📡</div>
+                <div><div class="stat-label">Latence</div><div class="stat-value" id="stat-ping"><%= stats.ping %>ms</div></div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon blue">🌐</div>
+                <div><div class="stat-label">Serveur</div><div class="stat-value" id="stat-name"><%= stats.serverName %></div></div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon green">👥</div>
+                <div><div class="stat-label">Membres</div><div class="stat-value" id="stat-users"><%= stats.users %></div></div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon orange">💾</div>
+                <div><div class="stat-label">RAM</div><div class="stat-value" id="stat-ram"><%= stats.ram %> MB</div></div>
+            </div>
         </div>
 
-        <div class="system-bar">
-            <strong>📦 Système :</strong>
-            <button class="btn-action" style="background: var(--warning); color: #000;" onclick="openEditor('config.json', true)">🛠️ Config</button>
-            <button class="btn-action" style="background: var(--success);" onclick="openSqlBrowser()">📂 Explorer SQLite</button>
-            <a href="/download-db" class="btn-action" style="background: #4e5058; text-decoration: none;">💾 DB Backup</a>
-        </div>
-
-        <h2>⚙️ Modules</h2>
+        <!-- Modules -->
+        <div class="section-title">Modules</div>
         <div class="module-grid">
-            <% let avMods=['Informations', 'Jeux' , 'Films' , 'Utilitaires' , 'Modérations' , 'Gestions', 'Antiraid' , 'Contact' , 'Paramètres' , 'FiveM' ]; %>
-            <% avMods.forEach(name=> { %>
-                <% const mod=modules.find(m=> m.moduleName === name); const isEnabled = mod ? mod.enabled : 1; %>
-                <div class="card">
-                    <div style="display: flex; justify-content: space-between;">
-                        <strong><%= name %></strong>
-                        <span style="color: <%= isEnabled ? '#43b581' : '#f04747' %>; font-size: 11px;">● <%= isEnabled ? 'Allumer' : 'Éteindre' %></span>
+            <% const avMods=['Informations','Jeux','Films','Utilitaires','Modérations','Gestions','Antiraid','Contact','Paramètres','FiveM','Codex']; %>
+            <% avMods.forEach(name => { %>
+                <% const mod = modules.find(m => m.moduleName === name); const isEnabled = mod ? mod.enabled : 1; %>
+                <div class="module-card">
+                    <div class="module-card-top">
+                        <div class="module-name"><%= name %></div>
+                        <div class="module-badge <%= isEnabled ? 'on' : 'off' %>"><%= isEnabled ? 'ON' : 'OFF' %></div>
                     </div>
                     <form action="/toggle-module" method="POST">
                         <input type="hidden" name="moduleName" value="<%= name %>">
                         <input type="hidden" name="currentState" value="<%= isEnabled %>">
-                        <button type="submit" class="btn-toggle" style="background: <%= isEnabled ? '#f04747' : '#43b581' %>"><%= isEnabled ? 'Éteindre' : 'Allumer' %></button>
+                        <button type="submit" class="toggle-btn <%= isEnabled ? 'on' : 'off' %>">
+                            <%= isEnabled ? '⏻ Désactiver' : '⏻ Activer' %>
+                        </button>
                     </form>
                 </div>
             <% }); %>
         </div>
 
-        <h2>📚 Commandes</h2>
-        <input type="text" id="searchInput" onkeyup="searchCmd()" placeholder="Rechercher une commande...">
-        <table id="cmdTable">
+        <!-- Commands -->
+        <div class="section-title">Commandes</div>
+        <div class="search-wrap">
+            <span class="search-icon">🔍</span>
+            <input type="text" id="searchInput" onkeyup="searchCmd()" placeholder="Rechercher une commande...">
+        </div>
+        <table class="cmd-table" id="cmdTable">
             <tbody>
-                <% allCommands.forEach(cmd=> { %>
-                    <% const status=cmdStatus.find(s=> s.commandName === cmd.name); const isEnabled = status ? status.enabled : 1; %>
-                    <tr>
-                        <td><strong style="color: var(--warning);">+<%= cmd.name %></strong></td>
-                        <td><span style="background:rgba(88,101,242,0.1); color:var(--blurple); padding:4px 8px; border-radius:4px;"><%= cmd.category %></span></td>
+                <% allCommands.forEach(cmd => { %>
+                    <%
+                        const parentModule = modules.find(m => m.moduleName === cmd.category);
+                        const isModuleEnabled = parentModule ? parentModule.enabled : 1;
+                        const status = commandsStatus.find(s => s.commandName === cmd.name);
+                        const isEnabled = status ? status.enabled : 1;
+                    %>
+                    <tr class="cmd-row <%= isModuleEnabled ? '' : 'disabled-row' %>">
+                        <td><span class="cmd-name">+<%= cmd.name %></span></td>
+                        <td><span class="cmd-cat"><%= cmd.category %></span></td>
                         <td align="right">
-                            <div style="display: flex; gap: 8px; justify-content: flex-end;">
-                                <button class="btn-action" style="background: #4e5058" onclick="openEditor('<%= cmd.name %>')">📝 Modifier</button>
-                                <form action="/toggle-command" method="POST" style="margin:0;">
-                                    <input type="hidden" name="commandName" value="<%= cmd.name %>">
-                                    <input type="hidden" name="currentState" value="<%= isEnabled %>">
-                                    <button type="submit" style="background: <%= isEnabled ? '#f04747' : '#43b581' %>; border:none; color:white; padding:5px 12px; border-radius:4px; cursor:pointer;"><%= isEnabled ? 'Éteindre' : 'Allumer' %></button>
-                                </form>
+                            <div style="display:flex; gap:6px; justify-content:flex-end;">
+                                <button class="btn btn-gray" onclick="openEditor('<%= cmd.name %>')">📝 Modifier</button>
+                                <% if (isModuleEnabled) { %>
+                                    <form action="/toggle-command" method="POST" style="margin:0;">
+                                        <input type="hidden" name="commandName" value="<%= cmd.name %>">
+                                        <input type="hidden" name="guildId" value="<%= guildId %>">
+                                        <input type="hidden" name="currentState" value="<%= isEnabled %>">
+                                        <button type="submit" class="btn <%= isEnabled ? 'btn-danger' : 'btn-success' %>">
+                                            <%= isEnabled ? '⏻ Désactiver' : '⏻ Activer' %>
+                                        </button>
+                                    </form>
+                                <% } else { %>
+                                    <button class="btn btn-disabled" disabled>Catégorie OFF</button>
+                                <% } %>
                             </div>
                         </td>
                     </tr>
@@ -179,312 +423,255 @@
             </tbody>
         </table>
 
+        <!-- Console -->
+        <div class="section-title" style="margin-top:28px;">Journal d'actions</div>
         <div id="panelLogsBox" class="console-box">En attente d'actions...</div>
 
-    <div id="editorModal" class="modal">
-        <div class="modal-content" style="max-width: 1300px;">
-            <div class="vscode-header">
-                <span id="fileNameDisplay">script.js</span>
-                <span id="aiStatus" style="font-size: 10px; color: var(--text-muted);"></span>
-                <span onclick="closeEditor()" style="cursor:pointer; padding: 0 10px;">✖</span>
-            </div>
-            <div style="display: flex; height: 600px;">
-                <textarea id="codeEditor" class="vscode-editor" spellcheck="false" style="flex: 1;"></textarea>
-                <div class="ai-sidebar">
-                    <div id="aiContent" class="ai-chat-container">
-                        <div id="aiMessages" class="ai-messages"></div>
-                        <div class="ai-footer">
-                            <textarea id="aiPrompt" class="ai-input" placeholder="Poser une question ou demander une modif..." rows="3"></textarea>
-                            <button id="btnSendAI" class="btn-action" style="background: var(--blurple); width: 100%; justify-content: center; margin-top: 8px;" onclick="askAI()">Envoyer</button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div style="padding: 10px; background: #252526; display: flex; justify-content: flex-end; gap: 10px;">
-                <button class="btn-action" style="background:#444" onclick="closeEditor()">Annuler</button>
-                <button class="btn-action" style="background:#007acc" onclick="saveCode()">Enregistrer</button>
-            </div>
-        </div>
     </div>
+</div>
 
-    <div id="sqlModal" class="modal">
-        <div class="modal-content" style="height: 85vh; display: flex; flex-direction: column;">
-            <div class="vscode-header"><span>SQL Browser (database.sqlite3)</span><span onclick="closeSqlBrowser()" style="cursor:pointer">✖</span></div>
-            <div style="display: flex; flex: 1; overflow: hidden;">
-                <div id="tableList" style="width: 220px; background: #252526; border-right: 1px solid #444; padding: 10px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px;"></div>
-                <div style="flex: 1; display: flex; flex-direction: column; background: #1e1e1e; padding: 15px; overflow: hidden;">
-                    <div style="background: #252526; padding: 12px; border-radius: 6px; margin-bottom: 15px; border: 1px solid #444;">
-                        <div style="display: flex; gap: 10px; align-items: flex-end;">
-                            <div style="flex: 1;">
-                                <label style="display: block; font-size: 10px; color: var(--text-muted); margin-bottom: 4px; text-transform: uppercase;">⚡ Exécuter une ligne SQL</label>
-                                <input type="text" id="quickSqlQuery" placeholder="Ex: UPDATE users SET money = 1000 WHERE userId = '123'" style="width: 100%; padding: 8px; background: #1a1a1a; border: 1px solid #333; color: #4ec9b0; border-radius: 4px; outline: none;">
-                            </div>
-                            <button class="btn-action" style="background: var(--blurple); height: 34px;" onclick="executeQuickQuery()">▶️</button>
-                        </div>
-                    </div>
-                    <div style="display: flex; gap: 10px; margin-bottom: 10px;">
-                        <button class="btn-action" style="background: var(--blurple);" onclick="promptCreateTable()">➕ Créer une table</button>
-                        <button class="btn-action" style="background: var(--warning); color:#000; display:none;" id="emptyTableBtn" onclick="openEmptyModal()">🗑️ Vider la table</button>
-                    </div>
-                    <div id="sqlResult" style="flex: 1; overflow: auto; background: #1a1a1a; border: 1px solid #333;"></div>
+
+<!-- EDITOR MODAL -->
+<div id="editorModal" class="modal">
+    <div class="modal-box" style="max-width:1280px;">
+        <div class="modal-header">
+            <div class="modal-title" id="fileNameDisplay">script.js</div>
+            <div class="modal-close" onclick="closeEditor()">✕</div>
+        </div>
+        <div class="editor-layout">
+            <textarea id="codeEditor" class="code-editor" spellcheck="false"></textarea>
+            <div class="ai-panel">
+                <div class="ai-panel-header">✦ Assistant IA</div>
+                <div id="aiMessages" class="ai-msgs"></div>
+                <div class="ai-input-area">
+                    <textarea id="aiPrompt" rows="3" placeholder="Poser une question..."></textarea>
+                    <button id="btnSendAI" class="btn btn-blurple" style="width:100%; justify-content:center; margin-top:8px;" onclick="askAI()">Envoyer →</button>
                 </div>
             </div>
         </div>
-    </div>
-
-    <div id="editRowModal" class="modal">
-        <div class="modal-content" style="max-width: 500px; margin-top: 10%;">
-            <div class="vscode-header"><span>✏️ Éditer la ligne</span><span onclick="closeEditModal()" style="cursor:pointer">✖</span></div>
-            <div id="editFieldsContainer" style="padding: 20px;"></div>
-            <div style="padding: 15px; background: #252526; display: flex; justify-content: flex-end; gap: 10px;">
-                <button class="btn-action" style="background:#444" onclick="closeEditModal()">Annuler</button>
-                <button class="btn-action" style="background:var(--success)" onclick="submitEdit()">Sauvegarder</button>
-            </div>
+        <div class="modal-footer">
+            <button class="btn btn-gray" onclick="closeEditor()">Annuler</button>
+            <button class="btn" style="background:rgba(0,122,204,0.18); color:#5eb5f5; border:1px solid rgba(0,122,204,0.3);" onclick="saveCode()">💾 Enregistrer</button>
         </div>
     </div>
+</div>
 
-    <div id="createTableModal" class="modal">
-        <div class="modal-content" style="max-width: 550px; margin-top: 8%;">
-            <div class="vscode-header"><span>➕ Créer une nouvelle table</span><span onclick="closeCreateModal()" style="cursor:pointer">✖</span></div>
-            <div style="padding: 20px;">
-                <div class="edit-field"><label>Nom de la table</label><input type="text" id="newTableName" placeholder="ex: economy"></div>
-                <div class="edit-field"><label>Colonnes (Format SQL)</label><input type="text" id="newTableCols" placeholder="id INTEGER PRIMARY KEY, userId TEXT, balance INT"></div>
-                <div class="help-box" style="line-height: 1.6;">
-                    <strong style="color:var(--blurple); display: block; margin-bottom: 5px;">🌱 Guide pour débutants :</strong>
-                    • <code style="color:#ce9178">TEXT</code> : Pour du texte.<br>
-                    • <code style="color:#b5cea8">INTEGER</code> : Pour des nombres.<br>
-                    • <code style="color:#569cd6">PRIMARY KEY</code> : La clé unique.
+<!-- SQL MODAL -->
+<div id="sqlModal" class="modal">
+    <div class="modal-box" style="height:85vh; display:flex; flex-direction:column;">
+        <div class="modal-header">
+            <div class="modal-title">SQL Browser — database.sqlite3</div>
+            <div class="modal-close" onclick="closeSqlBrowser()">✕</div>
+        </div>
+        <div class="sql-layout">
+            <div id="tableList" class="sql-sidebar"></div>
+            <div class="sql-main">
+                <div class="sql-query-bar">
+                    <input type="text" id="quickSqlQuery" placeholder="SELECT * FROM users ...">
+                    <button class="btn btn-blurple" style="height:36px;" onclick="executeQuickQuery()">▶ Run</button>
                 </div>
-            </div>
-            <div style="padding: 15px; background: #252526; display: flex; justify-content: flex-end; gap: 10px;">
-                <button class="btn-action" style="background:#444" onclick="closeCreateModal()">Annuler</button>
-                <button class="btn-action" style="background:var(--blurple)" onclick="submitCreateTable()">Créer la table</button>
-            </div>
-        </div>
-    </div>
-
-    <div id="actionConfirmModal" class="modal">
-        <div class="modal-content" style="max-width: 400px; margin-top: 15%;">
-            <div class="vscode-header"><span>Confirmation</span><span onclick="closeConfirmModal()" style="cursor:pointer">✖</span></div>
-            <div style="padding: 20px; text-align: center;">
-                <p id="confirmMessage"></p>
-                <div style="display: flex; justify-content: center; gap: 10px; margin-top: 20px;">
-                    <button class="btn-action" style="background:#444" onclick="closeConfirmModal()">Annuler</button>
-                    <button class="btn-action" style="background:var(--danger)" id="confirmBtn">Confirmer</button>
+                <div style="display:flex; gap:8px;">
+                    <button class="btn btn-gray" onclick="promptCreateTable()">➕ Nouvelle table</button>
+                    <button class="btn btn-gray" id="emptyTableBtn" style="display:none;" onclick="openEmptyModal()">🗑 Vider</button>
                 </div>
+                <div id="sqlResult" style="flex:1; overflow:auto;"></div>
             </div>
         </div>
     </div>
+</div>
 
-    <script>
-        let currentEditingFile = "";
-        let currentOpenedTable = "";
-        let hasGeminiKey = false;
-        let aiHistory = [];
-        let editRowData = { table: "", idKey: "", idVal: "", columns: [] };
+<!-- EDIT ROW -->
+<div id="editRowModal" class="modal">
+    <div class="modal-box modal-sm">
+        <div class="modal-header"><div class="modal-title">✏️ Éditer la ligne</div><div class="modal-close" onclick="closeEditModal()">✕</div></div>
+        <div id="editFieldsContainer" style="padding:20px;"></div>
+        <div class="modal-footer">
+            <button class="btn btn-gray" onclick="closeEditModal()">Annuler</button>
+            <button class="btn btn-success" onclick="submitEdit()">Sauvegarder</button>
+        </div>
+    </div>
+</div>
 
-        async function openEditor(name, isRaw = false) {
-            currentEditingFile = name;
-            aiHistory = [];
-            document.getElementById('aiMessages').innerHTML = `<div class="msg bot">Fichier <b>${name}</b> chargé. Comment puis-je vous aider ?</div>`;
-            document.getElementById('fileNameDisplay').innerText = name + (isRaw ? "" : ".js");
-            document.getElementById('editorModal').style.display = 'block';
-            const res = await fetch('/get-script/' + name);
-            const data = await res.json();
-            document.getElementById('codeEditor').value = data.content || data.error;
-        }
+<!-- CREATE TABLE -->
+<div id="createTableModal" class="modal">
+    <div class="modal-box modal-sm">
+        <div class="modal-header"><div class="modal-title">➕ Créer une table</div><div class="modal-close" onclick="closeCreateModal()">✕</div></div>
+        <div style="padding:20px;">
+            <div class="edit-field"><label class="edit-label">Nom</label><input type="text" id="newTableName" class="edit-input" placeholder="ex: economy"></div>
+            <div class="edit-field"><label class="edit-label">Colonnes (SQL)</label><input type="text" id="newTableCols" class="edit-input" placeholder="id INTEGER PRIMARY KEY, userId TEXT"></div>
+            <div class="help-box">
+                <strong style="color:#a5abff; display:block; margin-bottom:4px;">Guide rapide</strong>
+                <code style="color:#ce9178">TEXT</code> — texte &nbsp;·&nbsp; <code style="color:#b5cea8">INTEGER</code> — nombre &nbsp;·&nbsp; <code style="color:#569cd6">PRIMARY KEY</code>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-gray" onclick="closeCreateModal()">Annuler</button>
+            <button class="btn btn-blurple" onclick="submitCreateTable()">Créer</button>
+        </div>
+    </div>
+</div>
 
-        async function askAI() {
-            const promptInput = document.getElementById('aiPrompt');
-            const message = promptInput.value.trim();
-            const currentCode = document.getElementById('codeEditor').value;
-            const msgContainer = document.getElementById('aiMessages');
-            const btn = document.getElementById('btnSendAI');
-            if (!message || !hasGeminiKey) return;
-            msgContainer.innerHTML += `<div class="msg user">${message}</div>`;
-            promptInput.value = "";
-            msgContainer.scrollTop = msgContainer.scrollHeight;
-            btn.disabled = true;
-            try {
-                const res = await fetch('/api/ai-chat', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ message, code: currentCode, fileName: currentEditingFile, history: aiHistory })
-                });
-                const data = await res.json();
-                aiHistory.push({ user: message, bot: data.reply });
-                if (aiHistory.length > 10) aiHistory.shift();
-                msgContainer.innerHTML += `<div class="msg bot">${data.reply}</div>`;
-                if (data.newCode) {
-                    document.getElementById('codeEditor').value = data.newCode;
-                    msgContainer.innerHTML += `<div class="msg bot" style="font-style:italic; font-size:10px;">✨ Code mis à jour.</div>`;
-                }
-            } catch (e) { msgContainer.innerHTML += `<div class="msg bot" style="color:var(--danger)">Erreur IA.</div>`; }
-            btn.disabled = false;
-            msgContainer.scrollTop = msgContainer.scrollHeight;
-        }
+<!-- CONFIRM -->
+<div id="actionConfirmModal" class="modal">
+    <div class="modal-box modal-sm">
+        <div class="modal-header"><div class="modal-title">Confirmation</div><div class="modal-close" onclick="closeConfirmModal()">✕</div></div>
+        <div style="padding:24px; text-align:center;">
+            <p id="confirmMessage" style="color:var(--text-dim); font-size:14px;"></p>
+            <div style="display:flex; justify-content:center; gap:10px; margin-top:20px;">
+                <button class="btn btn-gray" onclick="closeConfirmModal()">Annuler</button>
+                <button class="btn btn-danger" id="confirmBtn">Confirmer</button>
+            </div>
+        </div>
+    </div>
+</div>
 
-        async function saveCode() {
-            const content = document.getElementById('codeEditor').value;
-            const res = await fetch('/save-script', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ fileName: currentEditingFile, content })
-            });
-            if ((await res.json()).success) closeEditor();
-        }
 
-        async function openSqlBrowser() {
-            document.getElementById('sqlModal').style.display = 'block';
-            const res = await fetch('/sql-tables');
-            const tables = await res.json();
-            const list = document.getElementById('tableList');
-            list.innerHTML = '';
-            tables.forEach(t => {
-                const container = document.createElement('div');
-                container.style = "display:flex; justify-content:space-between; align-items:center; background:#2d2d2d; border-radius:4px; padding-right:5px; margin-bottom:5px;";
-                const b = document.createElement('button');
-                b.innerText = t; b.style = "background:none; border:none; color:#ddd; text-align:left; cursor:pointer; padding:8px; font-size:13px; flex:1;";
-                b.onclick = () => loadTableData(t);
-                const del = document.createElement('button');
-                del.innerHTML = "🗑️"; del.style = "background:none; border:none; color:var(--danger); cursor:pointer;";
-                del.onclick = (e) => {
-                    e.stopPropagation(); openConfirmModal(`Supprimer la table ${t} ?`, async () => {
-                        await fetch('/sql-query', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ query: `DROP TABLE ${t}` }) });
-                        openSqlBrowser();
-                    });
-                };
-                container.appendChild(b); container.appendChild(del);
-                list.appendChild(container);
-            });
-        }
-
-        async function loadTableData(tableName) {
-            currentOpenedTable = tableName;
-            document.getElementById('emptyTableBtn').style.display = 'flex';
-            const res = await fetch('/sql-query', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ query: `SELECT * FROM ${tableName} LIMIT 100` })
-            });
-            const data = await res.json();
-            const resultDiv = document.getElementById('sqlResult');
-            if (data.rows && data.rows.length > 0) {
-                const columns = Object.keys(data.rows[0]);
-                let h = `<table class="pma-table"><thead><tr><th style="width:70px;">Actions</th>`;
-                columns.forEach(k => h += `<th>${k}</th>`);
-                h += `</tr></thead><tbody>`;
-                data.rows.forEach(r => {
-                    const rowJson = JSON.stringify(r).replace(/"/g, '&quot;');
-                    h += `<tr><td><button class="action-icon" onclick="openEditModal('${tableName}', ${rowJson})">✏️</button><button class="action-icon" style="color:var(--danger)" onclick="openConfirmModal('Supprimer ?', async () => { await fetch('/sql-query', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ query: 'DELETE FROM ${tableName} WHERE ${columns[0]} = \\'${r[columns[0]]}\\' ' }) }); loadTableData('${tableName}'); })">🗑️</button></td>`;
-                    Object.values(r).forEach(v => h += `<td>${v}</td>`);
-                    h += `</tr>`;
-                });
-                resultDiv.innerHTML = h + `</tbody></table>`;
-            } else resultDiv.innerHTML = `<p style="padding:20px; color:#888;">Table vide.</p>`;
-        }
-
-        async function executeQuickQuery() {
-            const query = document.getElementById('quickSqlQuery').value.trim();
-            if (!query) return;
-            openConfirmModal("Exécuter SQL ?", async () => {
-                const res = await fetch('/sql-query', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ query }) });
-                const data = await res.json();
-                if (data.error) alert(data.error);
-                else { document.getElementById('quickSqlQuery').value = ""; if (currentOpenedTable) loadTableData(currentOpenedTable); }
-            });
-        }
-
-        function openEditModal(tableName, rowData) {
-            editRowData.table = tableName; editRowData.columns = Object.keys(rowData);
-            editRowData.idKey = editRowData.columns[0]; editRowData.idVal = rowData[editRowData.idKey];
-            const container = document.getElementById('editFieldsContainer');
-            container.innerHTML = "";
-            editRowData.columns.forEach(col => { container.innerHTML += `<div class="edit-field"><label>${col}</label><input type="text" id="edit_col_${col}" value="${rowData[col]}"></div>`; });
-            document.getElementById('editRowModal').style.display = 'block';
-        }
-
-        async function submitEdit() {
-            const updates = editRowData.columns.map(col => `${col} = '${document.getElementById(`edit_col_${col}`).value}'`);
-            const query = `UPDATE ${editRowData.table} SET ${updates.join(', ')} WHERE ${editRowData.idKey} = '${editRowData.idVal}'`;
-            await fetch('/sql-query', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ query }) });
-            closeEditModal(); loadTableData(editRowData.table);
-        }
-
-        function promptCreateTable() { document.getElementById('createTableModal').style.display = 'block'; }
-        async function submitCreateTable() {
-            const n = document.getElementById('newTableName').value; const c = document.getElementById('newTableCols').value;
-            await fetch('/sql-query', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ query: `CREATE TABLE IF NOT EXISTS ${n} (${c})` }) });
-            closeCreateModal(); openSqlBrowser();
-        }
-
-        function openConfirmModal(msg, action) {
-            document.getElementById('confirmMessage').innerText = msg;
-            document.getElementById('actionConfirmModal').style.display = 'block';
-            document.getElementById('confirmBtn').onclick = () => { action(); closeConfirmModal(); };
-        }
-
-        function openEmptyModal() { openConfirmModal(`Vider ${currentOpenedTable} ?`, async () => { await fetch('/sql-query', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ query: `DELETE FROM ${currentOpenedTable}` }) }); loadTableData(currentOpenedTable); }); }
-        function searchCmd() { let v = document.getElementById('searchInput').value.toLowerCase(); document.querySelectorAll('#cmdTable tr').forEach(r => r.style.display = r.innerText.toLowerCase().includes(v) ? "" : "none"); }
-        function closeEditor() { document.getElementById('editorModal').style.display = 'none'; }
-        function closeSqlBrowser() { document.getElementById('sqlModal').style.display = 'none'; }
-        function closeEditModal() { document.getElementById('editRowModal').style.display = 'none'; }
-        function closeConfirmModal() { document.getElementById('actionConfirmModal').style.display = 'none'; }
-        function closeCreateModal() { document.getElementById('createTableModal').style.display = 'none'; }
-
-        setInterval(async () => {
-    try {
-        const res = await fetch('/api/stats');
-        const data = await res.json();
-        
-        document.getElementById('stat-ping').innerText = data.ping + "ms";
-        document.getElementById('stat-name').innerText = data.serverName;
-        document.getElementById('stat-users').innerText = data.users;
-        document.getElementById('stat-ram').innerText = data.ram + " MB";
-        
-        const icon = document.getElementById('stat-icon');
-        if (data.icon) {
-            icon.src = data.icon;
-            icon.style.display = 'block';
-        }
-
-        hasGeminiKey = data.geminiKey;
-        const aiStatusEl = document.getElementById('aiStatus');
-
-        if (!data.geminiKey) {
-            aiStatusEl.innerHTML = "<b class='alert-blink' style='color:var(--danger)'>⚠️ IA OFF (Manquante)</b>";
-        } else if (data.geminiValid === false) {
-            aiStatusEl.innerHTML = "<b class='alert-blink' style='color:var(--warning)'>❌ CLÉ INVALIDE</b>";
-            hasGeminiKey = false;
-        } else {
-            aiStatusEl.innerHTML = "<span style='color:var(--success)'>🟢 IA ACTIVE</span>";
-        }
-
-        const lr = await fetch('/get-panel-logs');
-        const ld = await lr.json();
-        document.getElementById('panelLogsBox').innerHTML = ld.logs.join('<br>');
-    } catch (e) {}
-}, 3000);
-
-        function toggleTheme() {
-            let t = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
-            document.documentElement.setAttribute('data-theme', t); localStorage.setItem('theme', t);
-        }
-        document.documentElement.setAttribute('data-theme', localStorage.getItem('theme') || 'dark');
+<script>
+    let currentEditingFile="", currentOpenedTable="", hasGeminiKey=false, aiHistory=[];
+    let editRowData = {table:"",idKey:"",idVal:"",columns:[]};
 
     function toggleSidebar() {
-    const sidebar = document.getElementById('guildSidebar');
-    const btn = document.querySelector('.toggle-sidebar-btn');
-    sidebar.classList.toggle('collapsed');
-    btn.classList.toggle('is-closed');
-}
-
-document.addEventListener('DOMContentLoaded', () => {
-    if (localStorage.getItem('sidebarCollapsed') === 'true') {
-        document.getElementById('guildSidebar').classList.add('collapsed');
+        const s = document.getElementById('sidebar');
+        const btn = document.getElementById('sidebarToggleBtn');
+        s.classList.toggle('expanded');
+        btn.innerHTML = s.classList.contains('expanded') ? '⇤' : '⇥';
     }
-});
 
-    </script>
+    async function openEditor(name, isRaw=false) {
+        currentEditingFile = name; aiHistory = [];
+        document.getElementById('aiMessages').innerHTML = `<div class="msg bot">Fichier <b>${name}</b> chargé.</div>`;
+        document.getElementById('fileNameDisplay').innerText = name + (isRaw ? "" : ".js");
+        document.getElementById('editorModal').classList.add('open');
+        const res = await fetch('/get-script/' + name);
+        const data = await res.json();
+        document.getElementById('codeEditor').value = data.content || data.error;
+    }
+    function closeEditor() { document.getElementById('editorModal').classList.remove('open'); }
+
+    async function askAI() {
+        const pi = document.getElementById('aiPrompt'), message = pi.value.trim();
+        const mc = document.getElementById('aiMessages'), btn = document.getElementById('btnSendAI');
+        if (!message || !hasGeminiKey) return;
+        mc.innerHTML += `<div class="msg user">${message}</div>`;
+        pi.value = ""; mc.scrollTop = mc.scrollHeight; btn.disabled = true;
+        try {
+            const res = await fetch('/api/ai-chat', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({message, code: document.getElementById('codeEditor').value, fileName: currentEditingFile, history: aiHistory})});
+            const data = await res.json();
+            aiHistory.push({user:message, bot:data.reply});
+            if (aiHistory.length > 10) aiHistory.shift();
+            mc.innerHTML += `<div class="msg bot">${data.reply}</div>`;
+            if (data.newCode) { document.getElementById('codeEditor').value = data.newCode; mc.innerHTML += `<div class="msg bot" style="font-style:italic;font-size:10px;">✨ Code mis à jour.</div>`; }
+        } catch(e) { mc.innerHTML += `<div class="msg bot" style="color:var(--danger)">Erreur IA.</div>`; }
+        btn.disabled = false; mc.scrollTop = mc.scrollHeight;
+    }
+
+    async function saveCode() {
+        const res = await fetch('/save-script', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({fileName: currentEditingFile, content: document.getElementById('codeEditor').value})});
+        if ((await res.json()).success) closeEditor();
+    }
+
+    async function openSqlBrowser() {
+        document.getElementById('sqlModal').classList.add('open');
+        const res = await fetch('/sql-tables');
+        const tables = await res.json();
+        const list = document.getElementById('tableList');
+        list.innerHTML = '';
+        tables.forEach(t => {
+            const row = document.createElement('div'); row.className = 'sql-table-row';
+            const b = document.createElement('button'); b.className = 'sql-table-btn'; b.innerText = t; b.onclick = () => loadTableData(t);
+            const d = document.createElement('button'); d.innerHTML = '🗑'; d.style = 'background:none; border:none; color:var(--danger); cursor:pointer; padding:4px 6px;';
+            d.onclick = e => { e.stopPropagation(); openConfirmModal(`Supprimer ${t} ?`, async () => { await fetch('/sql-query', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({query:`DROP TABLE ${t}`})}); openSqlBrowser(); }); };
+            row.appendChild(b); row.appendChild(d); list.appendChild(row);
+        });
+    }
+    function closeSqlBrowser() { document.getElementById('sqlModal').classList.remove('open'); }
+
+    async function loadTableData(tableName) {
+        currentOpenedTable = tableName;
+        document.getElementById('emptyTableBtn').style.display = 'flex';
+        const res = await fetch('/sql-query', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({query:`SELECT * FROM ${tableName} LIMIT 100`})});
+        const data = await res.json();
+        const rd = document.getElementById('sqlResult');
+        if (data.rows && data.rows.length > 0) {
+            const cols = Object.keys(data.rows[0]);
+            let h = `<table class="pma-table"><thead><tr><th style="width:80px;">Actions</th>${cols.map(k=>`<th>${k}</th>`).join('')}</tr></thead><tbody>`;
+            data.rows.forEach(r => {
+                const rj = JSON.stringify(r).replace(/"/g,'&quot;');
+                h += `<tr><td><button class="btn btn-gray" style="padding:3px 7px; margin-right:4px;" onclick="openEditModal('${tableName}', ${rj})">✏️</button><button class="btn btn-danger" style="padding:3px 7px;" onclick="openConfirmModal('Supprimer ?', async()=>{await fetch('/sql-query',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({query:'DELETE FROM ${tableName} WHERE ${cols[0]} = \\'${r[cols[0]]}\\''})}); loadTableData('${tableName}');})">🗑</button></td>${Object.values(r).map(v=>`<td>${v}</td>`).join('')}</tr>`;
+            });
+            rd.innerHTML = h + '</tbody></table>';
+        } else rd.innerHTML = `<p style="padding:20px; color:var(--text-muted); font-size:13px;">Table vide.</p>`;
+    }
+
+    async function executeQuickQuery() {
+        const q = document.getElementById('quickSqlQuery').value.trim();
+        if (!q) return;
+        openConfirmModal("Exécuter cette requête ?", async () => {
+            const res = await fetch('/sql-query', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({query:q})});
+            const data = await res.json();
+            if (data.error) alert(data.error);
+            else { document.getElementById('quickSqlQuery').value=""; if(currentOpenedTable) loadTableData(currentOpenedTable); }
+        });
+    }
+
+    function openEditModal(tableName, rowData) {
+        editRowData = {table:tableName, columns:Object.keys(rowData), idKey:Object.keys(rowData)[0], idVal:rowData[Object.keys(rowData)[0]]};
+        document.getElementById('editFieldsContainer').innerHTML = editRowData.columns.map(col => `<div class="edit-field"><label class="edit-label">${col}</label><input type="text" class="edit-input" id="edit_col_${col}" value="${rowData[col]}"></div>`).join('');
+        document.getElementById('editRowModal').classList.add('open');
+    }
+    async function submitEdit() {
+        const q = `UPDATE ${editRowData.table} SET ${editRowData.columns.map(c=>`${c}='${document.getElementById(`edit_col_${c}`).value}'`).join(',')} WHERE ${editRowData.idKey}='${editRowData.idVal}'`;
+        await fetch('/sql-query', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({query:q})});
+        closeEditModal(); loadTableData(editRowData.table);
+    }
+
+    function promptCreateTable() { document.getElementById('createTableModal').classList.add('open'); }
+    async function submitCreateTable() {
+        const n = document.getElementById('newTableName').value, c = document.getElementById('newTableCols').value;
+        await fetch('/sql-query', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({query:`CREATE TABLE IF NOT EXISTS ${n} (${c})`})});
+        closeCreateModal(); openSqlBrowser();
+    }
+
+    function openConfirmModal(msg, action) {
+        document.getElementById('confirmMessage').innerText = msg;
+        document.getElementById('actionConfirmModal').classList.add('open');
+        document.getElementById('confirmBtn').onclick = () => { action(); closeConfirmModal(); };
+    }
+    function openEmptyModal() { openConfirmModal(`Vider ${currentOpenedTable} ?`, async()=>{ await fetch('/sql-query',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({query:`DELETE FROM ${currentOpenedTable}`})}); loadTableData(currentOpenedTable); }); }
+
+    function searchCmd() {
+        const v = document.getElementById('searchInput').value.toLowerCase();
+        document.querySelectorAll('#cmdTable tr').forEach(r => r.style.display = r.innerText.toLowerCase().includes(v) ? "" : "none");
+    }
+
+    function closeEditModal() { document.getElementById('editRowModal').classList.remove('open'); }
+    function closeConfirmModal() { document.getElementById('actionConfirmModal').classList.remove('open'); }
+    function closeCreateModal() { document.getElementById('createTableModal').classList.remove('open'); }
+
+    setInterval(async () => {
+        try {
+            const res = await fetch('/api/stats'), data = await res.json();
+            document.getElementById('stat-ping').innerText = data.ping + "ms";
+            document.getElementById('stat-name').innerText = data.serverName;
+            document.getElementById('stat-users').innerText = data.users;
+            document.getElementById('stat-ram').innerText = data.ram + " MB";
+            hasGeminiKey = data.geminiKey;
+            const el = document.getElementById('aiStatus');
+            if (!data.geminiKey) el.innerHTML = "<b class='alert-blink' style='color:var(--danger);font-size:11px;'>⚠️ IA OFF</b>";
+            else if (data.geminiValid === false) { el.innerHTML = "<b class='alert-blink' style='color:var(--warning);font-size:11px;'>❌ Clé invalide</b>"; hasGeminiKey = false; }
+            else el.innerHTML = "<span style='color:var(--success);font-size:11px;'>🟢 IA active</span>";
+            const lr = await fetch('/get-panel-logs'), ld = await lr.json();
+            document.getElementById('panelLogsBox').innerHTML = ld.logs.length ? ld.logs.join('<br>') : "En attente d'actions...";
+        } catch(e) {}
+    }, 3000);
+
+    function toggleTheme() {
+        const t = document.documentElement.getAttribute('data-theme') === 'light' ? 'dark' : 'light';
+        document.documentElement.setAttribute('data-theme', t); localStorage.setItem('theme', t);
+    }
+    document.documentElement.setAttribute('data-theme', localStorage.getItem('theme') || 'dark');
+
+    document.querySelectorAll('.modal').forEach(m => m.addEventListener('click', e => { if (e.target===m) m.classList.remove('open'); }));
+</script>
 </body>
 </html>
