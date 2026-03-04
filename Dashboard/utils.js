@@ -14,7 +14,9 @@ const categories = [
     'Antiraid',
     'Contact',
     'Paramètres',
-    'FiveM'
+    'FiveM',
+    'Codex',
+    'Bourse'
 ];
 
 export async function getAllCommands() {
