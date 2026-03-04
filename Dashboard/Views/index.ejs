@@ -364,7 +364,7 @@
         <!-- Modules -->
         <div class="section-title">Modules</div>
         <div class="module-grid">
-            <% const avMods=['Informations','Jeux','Films','Utilitaires','Modérations','Gestions','Antiraid','Contact','Paramètres','FiveM','Codex']; %>
+            <% const avMods=['Informations','Jeux','Films','Utilitaires','Modérations','Gestions','Antiraid','Contact','Paramètres','FiveM','Codex', 'Bourse']; %>
             <% avMods.forEach(name => { %>
                 <% const mod = modules.find(m => m.moduleName === name); const isEnabled = mod ? mod.enabled : 1; %>
                 <div class="module-card">
