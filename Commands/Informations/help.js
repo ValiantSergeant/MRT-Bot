@@ -19,7 +19,8 @@ const categories = [
     'Contact',
     'Paramètres',
     'FiveM',
-    'Codex'
+    'Codex',
+    'Bourse'
 ];
 
 export const command = {
