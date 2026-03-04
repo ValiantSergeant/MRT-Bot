@@ -1,10 +1,22 @@
-import Discord, { Client, Collection, EmbedBuilder, Partials } from "discord.js";
+import pkgDiscord from 'discord.js';
+const { Client, Collection, EmbedBuilder, Partials, GatewayIntentBits } = pkgDiscord;
+
+import pkgGiveaways from "discord-giveaways";
+const { GiveawaysManager } = pkgGiveaways;
+
 import config from "./config.json" with { type: 'json' };
-import { GiveawaysManager } from "discord-giveaways";
 import { startDashboard } from './Dashboard/server.js';
 
 const bot = new Client({
-    intents: 3276799,
+    intents: [
+        GatewayIntentBits.Guilds,
+        GatewayIntentBits.GuildMessages,
+        GatewayIntentBits.MessageContent,
+        GatewayIntentBits.GuildMembers,
+        GatewayIntentBits.GuildPresences,
+        GatewayIntentBits.GuildVoiceStates,
+        GatewayIntentBits.GuildMessageReactions
+    ],
     partials: [
         Partials.Channel,
         Partials.Message,
@@ -17,7 +29,7 @@ const bot = new Client({
 bot.commands = new Collection();
 bot.setMaxListeners(70);
 
-global.Discord = Discord;
+global.Discord = pkgDiscord;
 global.client = bot; 
 
 bot.on('ready', () => {
