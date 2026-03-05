@@ -17,6 +17,16 @@
 - IA
 - FiveM
 - Profil
+- Codex
+- Bourse
+
+> [!CAUTION]
+> ### 🛡️ Avertissement : Commande Screenshot
+> L'utilisation de la commande `+screenshot` avec le JavaScript activé (`on js`) comporte des risques :
+> - **Consommation de ressources :** L'exécution du JS sature davantage le CPU et la RAM de votre hébergeur.
+> - **Sécurité de l'hôte :** Le bot exécute des scripts tiers. Un site malveillant pourrait tenter d'exploiter des failles du navigateur (Puppeteer).
+> - **Exposition d'IP :** L'adresse IP de votre serveur est directement visible par les sites capturés.
+> **Conseil :** Laissez le mode JS sur `off` par défaut et ne l'activez que pour des besoins spécifiques.
 
 ## Prérequis
 - [Node.js](https://nodejs.org/fr/download/current) (22.12+)
