@@ -8,6 +8,7 @@
     "@discordjs/rest": "^0.4.1",
     "@google/generative-ai": "^0.21.0",
     "axios": "^1.13.6",
+    "canvas": "^3.2.1",
     "cheerio": "^1.2.0",
     "date-fns": "^4.1.0",
     "discord-api-types": "^0.37.100",
