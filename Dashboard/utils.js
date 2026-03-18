@@ -16,7 +16,8 @@ const categories = [
     'Paramètres',
     'FiveM',
     'Codex',
-    'Bourse'
+    'Bourse',
+    'Ventes'
 ];
 
 export async function getAllCommands() {
