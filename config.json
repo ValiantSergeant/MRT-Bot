@@ -31,6 +31,18 @@
     "emoji": "✅"
   },
 
+  "shop": {
+    "paypal": "https://paypal.me/martindepanne",
+    "btc": "TON_ADRESSE_BTC",
+    "ltc": "TON_ADRESSE_LTC",
+    "buyerRoleId": "ID_DU_ROLE",
+    "image": "https://www.presse-citron.net/app/uploads/2024/04/paypal-entre-proches.jpg",
+    "logo_paypal": "https://upload.wikimedia.org/wikipedia/commons/a/a4/Paypal_2014_logo.png",
+    "logo_btc": "https://upload.wikimedia.org/wikipedia/commons/thumb/4/46/Bitcoin.svg/960px-Bitcoin.svg.png",
+    "logo_ltc": "https://s3.coinmarketcap.com/static/img/portraits/630c5fcaf8184351dc5c6ee5.png"
+  },
+
+
   "vouch": {
     "channelId": "ID_DU_SALON"
   }
