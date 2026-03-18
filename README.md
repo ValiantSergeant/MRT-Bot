@@ -19,6 +19,7 @@
 - Profil
 - Codex
 - Bourse
+- Ventes
 
 > [!CAUTION]
 > ### 🛡️ Avertissement : Commande Screenshot
