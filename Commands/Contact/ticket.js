@@ -126,6 +126,7 @@ export const command = {
         if (ticketConfig.titre) embed.setTitle(ticketConfig.titre);
         embed.setDescription(ticketConfig.description || "Ouvrez un ticket");
         embed.setColor(configData.color || "#96480C");
+        embed.setImage(ticketConfig.image ||"https://siecledigital.fr/wp-content/uploads/2017/05/Rickroll.jpg" );
         
         let icon = message.guild.iconURL({ dynamic: true });
         if (ticketConfig.footer) {
