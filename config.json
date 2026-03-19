@@ -15,6 +15,7 @@
     "titre": "Support",
     "description": "Pour contacter le staff, veuillez sélectionner une raison",
     "footer": "Support",
+    "image": "",
     "options": {
       "option1": "Problème bot",
       "option2": "Suggestion",
