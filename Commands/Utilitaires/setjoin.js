@@ -97,11 +97,16 @@ export const command = {
 
 		const arg = message.content.trim().split(/ +/g);
 
+		if (!arg[1]) {
+			return message.reply(`Usage correct : \`${command.helpname}\``);
+		}
+
 		if (arg[1].toLowerCase() === "off") {
 			db.run(`UPDATE joinsettings SET channel = ?, message = ? WHERE guildId = ?`, ['off', '', message.guild.id], function (err) {
-				if (err) return message.reply("Erreur lors de la désactivation ou est-ce déjà désactivé ?");
+				if (err) return message.reply("Erreur lors de la désactivation.");
 				return message.reply("Le message de bienvenue a bien été désactivé.");
 			});
+			return;
 		}
 
 		const channelId = arg[1].replace("<#", "").replace(">", "");
