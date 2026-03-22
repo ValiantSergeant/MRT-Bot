@@ -6,6 +6,7 @@ const config = require('../../config.json');
 export const command = {
     name: "pay",
     aliases: ["paypal", "crypto", "paiement"],
+    description: "Envoi l'embed de payement",
     run: async (bot, message, args) => {
         const montant = args[0];
         const methode = args[1]?.toLowerCase();
