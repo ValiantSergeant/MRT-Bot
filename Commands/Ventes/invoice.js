@@ -7,6 +7,7 @@ const config = require('../../config.json');
 export const command = {
     name: "invoice",
     aliases: ["facture", "pdf"],
+    description: "Envoi la facture au client",
     run: async (bot, message, args) => {
         if (!message.member.permissions.has(PermissionFlagsBits.Administrator)) {
             return message.reply("❌ Permission insuffisante.");
