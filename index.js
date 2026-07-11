@@ -82,6 +82,6 @@ const eventdHandler = (await import('./Handler/Events.js')).default(bot);
 const anticrashHandler = (await import('./Handler/anticrash.js')).default;
 anticrashHandler(bot);
 
-bot.login(config.token).catch((e) => {
+bot.login(process.env.TOKEN || config.token).catch((e) => {
     console.log('\x1b[31m[!] — Token invalide ou Intents mal configurés\x1b[0m');
 });
